@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Spendly{% endblock %}
+
+{% block head %}
+<style>
+    .legal-page {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 3rem 2rem 5rem;
+    }
+    .legal-page h1 {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        color: var(--ink);
+        margin-bottom: 0.5rem;
+    }
+    .legal-meta {
+        color: var(--ink-faint);
+        font-size: 0.85rem;
+        margin-bottom: 3rem;
+    }
+    .legal-section {
+        margin-bottom: 2.5rem;
+    }
+    .legal-section h2 {
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .legal-section p {
+        font-family: var(--font-body);
+        line-height: 1.75;
+        color: var(--ink-muted);
+    }
+    .legal-section ul {
+        margin: 0.5rem 0 1rem 1.5rem;
+        line-height: 1.8;
+        color: var(--ink-muted);
+    }
+    .legal-section li {
+        margin-bottom: 0.4rem;
+    }
+    @media (max-width: 640px) {
+        .legal-page { padding: 2rem 1.25rem 4rem; }
+        .legal-page h1 { font-size: 2rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="legal-page">
+    <h1>Privacy Policy</h1>
+    <p class="legal-meta">Last updated: May 2026</p>
+
+    <div class="legal-section">
+        <h2>1. Data We Collect</h2>
+        <p>We collect only the information you voluntarily provide to use Spendly. This may include:</p>
+        <ul>
+            <li>Expense details (amount, category, date, description)</li>
+            <li>Account information (email, username)</li>
+            <li>Device and usage data for analytics purposes</li>
+        </ul>
+    </div>
+
+    <div class="legal-section">
+        <h2>2. How We Use Your Data</h2>
+        <p>We use the information we collect to provide and improve our services. Specifically, we use your data to:</p>
+        <ul>
+            <li>Track and categorize your expenses</li>
+            <li>Generate spending reports and insights</li>
+            <li>Improve our app functionality and user experience</li>
+            <li>Communicate with you about your account</li>
+        </ul>
+    </div>
+
+    <div class="legal-section">
+        <h2>3. Data Storage</h2>
+        <p>Your financial data is stored locally on your device and/or on secure servers that we maintain. We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>4. Third Party Services</h2>
+        <p>Spendly may use third-party services for hosting, analytics, or payment processing. These service providers are obligated to maintain the confidentiality of your information and are not permitted to use your data for any purpose other than providing services on our behalf.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>5. Your Rights</h2>
+        <p>You have the right to access, update, or delete your personal information at any time. You can do this directly through the app or by contacting us. Upon request, we will delete or anonymize your data within a reasonable timeframe.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>6. Changes to Policy</h2>
+        <p>We may update this privacy policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date. Your continued use of Spendly after changes constitutes acceptance of the updated policy.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>7. Contact Us</h2>
+        <p>If you have any questions about this Privacy Policy, please contact us through the app or at hello@spendly.app</p>
+    </div>
+</div>
+{% endblock %}
