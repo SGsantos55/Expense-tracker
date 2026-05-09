@@ -2,55 +2,327 @@
 
 {% block title %}Spendly — Track Every Rupee{% endblock %}
 
+{% block head %}
+<style>
+    :root {
+        --neon-green: #00E58F;
+        --neon-green-light: #E6FBF0;
+        --neon-green-dark: #00C47A;
+        --bg-gray: #F5F5F3;
+        --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        --card-shadow-hover: 0 8px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-section {
+        background: var(--bg-gray);
+        padding: 3rem 2rem 4rem;
+    }
+
+    .hero-container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: var(--neon-green-light);
+        color: var(--neon-green-dark);
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.4rem 1rem;
+        border-radius: 999px;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-heading {
+        font-family: var(--font-body);
+        font-size: clamp(2.8rem, 6vw, 4.5rem);
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        margin-bottom: 1.25rem;
+    }
+
+    .hero-heading .accent {
+        color: var(--neon-green);
+        font-size: 1.05em;
+    }
+
+    .hero-subtext {
+        font-size: 1.15rem;
+        color: var(--ink-muted);
+        max-width: 500px;
+        margin: 0 auto 2rem;
+        line-height: 1.65;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .hero-actions .btn-primary {
+        background: var(--ink);
+        color: white;
+        padding: 0.9rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        min-width: 180px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .hero-actions .btn-primary:hover {
+        background: var(--neon-green-dark);
+        transform: translateY(-1px);
+    }
+
+    .hero-actions .btn-ghost {
+        background: white;
+        color: var(--ink);
+        padding: 0.9rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        min-width: 180px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .hero-actions .btn-ghost:hover {
+        border-color: var(--ink);
+        transform: translateY(-1px);
+    }
+
+    .hero-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 2rem 0;
+        color: var(--ink-faint);
+        font-size: 1.25rem;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-soft);
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .dashboard-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ink);
+    }
+
+    .dashboard-meta {
+        font-size: 0.8rem;
+        color: var(--ink-faint);
+    }
+
+    .dashboard-total {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        color: var(--ink);
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-total span {
+        font-size: 1rem;
+        color: var(--ink-faint);
+        font-family: var(--font-body);
+        font-weight: 400;
+    }
+
+    .category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .category-row {
+        display: grid;
+        grid-template-columns: 100px 1fr 80px;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .category-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--ink-soft);
+    }
+
+    .category-bar-track {
+        height: 8px;
+        background: var(--bg-gray);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .category-bar {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.5s ease;
+    }
+
+    .category-bar.food { background: #FF6B6B; }
+    .category-bar.travel { background: #4ECDC4; }
+    .category-bar.bills { background: var(--neon-green); }
+    .category-bar.shopping { background: #9B59B6; }
+    .category-bar.health { background: #F39C12; }
+
+    .category-amount {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ink);
+        text-align: right;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-gray);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--ink-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-family: var(--font-body);
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+    .stat-status {
+        font-size: 0.75rem;
+        margin-top: 0.35rem;
+    }
+
+    .stat-status.up { color: var(--neon-green); }
+    .stat-status.down { color: var(--danger); }
+
+    @media (max-width: 640px) {
+        .hero-actions { flex-direction: column; }
+        .hero-actions .btn-primary,
+        .hero-actions .btn-ghost { width: 100%; max-width: 280px; }
+        .category-row { grid-template-columns: 80px 1fr 70px; gap: 0.75rem; }
+        .dashboard-card { padding: 1.5rem; }
+        .stats-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<section class="hero">
-    <div class="hero-badge-new">Free to use • No credit card needed</div>
-    <h1 class="hero-title">
-        Know where your<br>
-        <span class="title-accent">money goes</span>
-    </h1>
-    <p class="hero-subtitle">
-        Simple, powerful expense tracking that puts you in control.
-    </p>
-    <div class="hero-actions">
-        <a href="{{ url_for('register') }}" class="btn-primary">Get Started</a>
-        <a href="{{ url_for('login') }}" class="btn-ghost">Sign in</a>
-    </div>
-    <div class="hero-visual">
-        <div class="mock-card">
-            <div class="mock-card-header">
-                <span class="mock-label">March 2026</span>
-                <span class="mock-total">₹12,450</span>
+<section class="hero-section">
+    <div class="hero-container">
+        <div style="text-align: center;">
+            <div class="hero-badge">• Free to use • No credit card needed</div>
+            <h1 class="hero-heading">
+                Know where your<br>
+                <span class="accent">money goes.</span>
+            </h1>
+            <p class="hero-subtext">
+                Track expenses, analyze spending patterns, and take control of your finances — all in one beautifully simple app.
+            </p>
+            <div class="hero-actions">
+                <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
+                <a href="#" class="btn-ghost">See how it works</a>
             </div>
-            <div class="mock-bars">
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Bills</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar" style="width: 72%"></div>
-                    </div>
-                    <span class="mock-amt">₹4,500</span>
+        </div>
+        <div class="hero-divider">+</div>
+        <div class="dashboard-card">
+            <div class="dashboard-header">
+                <span class="dashboard-title">Monthly Overview</span>
+                <span class="dashboard-meta">May 2026</span>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">This Month</div>
+                    <div class="stat-value">₹18,450</div>
+                    <div class="stat-status up">+12% vs last month</div>
                 </div>
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Food</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar mock-bar-2" style="width: 52%"></div>
-                    </div>
-                    <span class="mock-amt">₹3,200</span>
+                <div class="stat-card">
+                    <div class="stat-label">Budget Left</div>
+                    <div class="stat-value">₹31,550</div>
+                    <div class="stat-status">43% remaining</div>
                 </div>
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Transport</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar mock-bar-3" style="width: 38%"></div>
-                    </div>
-                    <span class="mock-amt">₹2,350</span>
+                <div class="stat-card">
+                    <div class="stat-label">Transactions</div>
+                    <div class="stat-value">34</div>
+                    <div class="stat-status">this month</div>
                 </div>
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Shopping</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar mock-bar-4" style="width: 25%"></div>
+            </div>
+            <div class="category-list">
+                <div class="category-row">
+                    <span class="category-name">Food</span>
+                    <div class="category-bar-track">
+                        <div class="category-bar food" style="width: 65%"></div>
                     </div>
-                    <span class="mock-amt">₹1,550</span>
+                    <span class="category-amount">₹5,200</span>
+                </div>
+                <div class="category-row">
+                    <span class="category-name">Travel</span>
+                    <div class="category-bar-track">
+                        <div class="category-bar travel" style="width: 45%"></div>
+                    </div>
+                    <span class="category-amount">₹3,800</span>
+                </div>
+                <div class="category-row">
+                    <span class="category-name">Bills</span>
+                    <div class="category-bar-track">
+                        <div class="category-bar bills" style="width: 38%"></div>
+                    </div>
+                    <span class="category-amount">₹4,100</span>
+                </div>
+                <div class="category-row">
+                    <span class="category-name">Shopping</span>
+                    <div class="category-bar-track">
+                        <div class="category-bar shopping" style="width: 25%"></div>
+                    </div>
+                    <span class="category-amount">₹3,150</span>
+                </div>
+                <div class="category-row">
+                    <span class="category-name">Health</span>
+                    <div class="category-bar-track">
+                        <div class="category-bar health" style="width: 15%"></div>
+                    </div>
+                    <span class="category-amount">₹2,200</span>
                 </div>
             </div>
         </div>

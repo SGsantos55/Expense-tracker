@@ -15,10 +15,13 @@
     <nav class="navbar">
         <div class="nav-inner">
             <a href="{{ url_for('landing') }}" class="nav-brand">
-                <span class="brand-icon">◈</span>
+                <span class="brand-icon" style="color: var(--neon-green);">◈</span>
                 <span class="brand-name">Spendly</span>
             </a>
             <div class="nav-links">
+                <a href="#">Features</a>
+                <a href="#">Pricing</a>
+                <a href="#">Blog</a>
                 <a href="{{ url_for('login') }}">Sign in</a>
                 <a href="{{ url_for('register') }}" class="nav-cta">Get started</a>
             </div>
