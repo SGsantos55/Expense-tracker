@@ -244,6 +244,67 @@
         .dashboard-card { padding: 1.5rem; }
         .stats-row { grid-template-columns: 1fr; }
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: #000;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 800px;
+        position: relative;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0.25rem;
+    }
+
+    .modal-close:hover {
+        color: var(--neon-green);
+    }
+
+    .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
 </style>
 {% endblock %}
 
@@ -262,7 +323,7 @@
             </p>
             <div class="hero-actions">
                 <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
-                <a href="#" class="btn-ghost">See how it works</a>
+                <a href="#" class="btn-ghost" id="videoBtn">See how it works</a>
             </div>
         </div>
         <div class="hero-divider">+</div>
@@ -356,5 +417,50 @@
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
+
+<!-- Video Modal -->
+<div class="modal-overlay" id="videoModal">
+    <div class="modal-content">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="video-wrapper">
+            <iframe id="videoFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+    var videoBtn = document.getElementById('videoBtn');
+    var modal = document.getElementById('videoModal');
+    var modalClose = document.getElementById('modalClose');
+    var videoFrame = document.getElementById('videoFrame');
+
+    videoBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Replace this URL with your actual YouTube embed URL
+        videoFrame.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1';
+        modal.classList.add('active');
+    });
+
+    modalClose.addEventListener('click', function() {
+        closeModal();
+    });
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    function closeModal() {
+        modal.classList.remove('active');
+        videoFrame.src = '';
+    }
+</script>
 
 {% endblock %}
