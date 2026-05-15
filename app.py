@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, flash, url_for, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from database.db import get_db, init_db, seed_db
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key-change-in-production"
@@ -124,46 +125,18 @@ def profile():
     if not g.user_id:
         return redirect(url_for("login"))
 
-    # Hardcoded user data for UI layout validation
-    user = {
-        "name": "Alex Johnson",
-        "email": "alex@example.com",
-        "created_at": "2025-03-15"
-    }
-
-    # Hardcoded summary stats (in Nepali Rupees)
-    total = 350000.00
-    this_month = 45000.00
-    last_month = 38000.00
-    transaction_count = 47
-    top_category = "Food & Dining"
-
-    # Hardcoded categories with percentages (in Nepali Rupees)
-    categories = [
-        {"category": "Food & Dining", "total": 85000, "percentage": 24},
-        {"category": "Bills", "total": 72000, "percentage": 21},
-        {"category": "Transport", "total": 55000, "percentage": 16},
-        {"category": "Shopping", "total": 68000, "percentage": 19},
-        {"category": "Health", "total": 45000, "percentage": 13},
-        {"category": "Entertainment", "total": 25000, "percentage": 7}
-    ]
-
-    # Hardcoded recent transactions (in Nepali Rupees)
-    recent = [
-        {"date": "2025-05-12", "description": "Grocery shopping at wholesale market", "category": "Food", "amount": 4500},
-        {"date": "2025-05-10", "description": "Bus fare to city", "category": "Transport", "amount": 800},
-        {"date": "2025-05-08", "description": "Netflix subscription", "category": "Entertainment", "amount": 650},
-        {"date": "2025-05-05", "description": "Electricity bill", "category": "Bills", "amount": 3500},
-        {"date": "2025-05-02", "description": "Tea and snacks at local shop", "category": "Food", "amount": 150}
-    ]
+    user = get_user_by_id(g.user_id)
+    stats = get_summary_stats(g.user_id)
+    recent = get_recent_transactions(g.user_id)
+    categories = get_category_breakdown(g.user_id)
 
     return render_template("profile.html",
         user=user,
-        total=total,
-        this_month=this_month,
-        last_month=last_month,
-        transaction_count=transaction_count,
-        top_category=top_category,
+        total=stats["total_spent"],
+        this_month=0.0,
+        last_month=0.0,
+        transaction_count=stats["transaction_count"],
+        top_category=stats["top_category"],
         categories=categories,
         recent=recent
     )

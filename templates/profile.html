@@ -12,7 +12,7 @@
             <p>{{ user.email }}</p>
             <div class="profile-joined">
                 <i data-lucide="calendar"></i>
-                <span>Joined {{ user.created_at[:10] if user.created_at else 'recently' }}</span>
+                <span>Joined {{ user.member_since }}</span>
             </div>
         </div>
     </div>
@@ -67,13 +67,13 @@
                 <div class="category-header">
                     <span class="category-name">
                         <i data-lucide="tag"></i>
-                        {{ cat.category }}
+                        {{ cat.name }}
                     </span>
-                    <span class="category-amount">Rs {{ "%.2f"|format(cat.total) }}</span>
+                    <span class="category-amount">Rs {{ "%.2f"|format(cat.amount) }}</span>
                 </div>
                 <div class="category-bar-track">
                     {% set bar_class = 'secondary' if loop.index == 2 else ('tertiary' if loop.index > 2 else '') %}
-                    <div class="category-bar {{ bar_class }}" style="width: {{ cat.percentage }}%"></div>
+                    <div class="category-bar {{ bar_class }}" style="width: {{ cat.pct }}%"></div>
                 </div>
             </div>
             {% endfor %}
