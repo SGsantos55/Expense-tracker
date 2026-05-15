@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+    {# Profile Header #}
+    <div class="profile-header">
+        <div class="profile-avatar">{{ user.name[0].upper() }}</div>
+        <div class="profile-info">
+            <h1>{{ user.name }}</h1>
+            <p>{{ user.email }}</p>
+            <div class="profile-joined">
+                <i data-lucide="calendar"></i>
+                <span>Joined {{ user.created_at[:10] if user.created_at else 'recently' }}</span>
+            </div>
+        </div>
+    </div>
+
+    {# Stats Row #}
+    <div class="profile-section">
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-header">
+                    <span class="stat-label">Total Spent</span>
+                    <div class="stat-icon">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                </div>
+                <div class="stat-value">Rs {{ "%.2f"|format(total) }}</div>
+            </div>
+
+            <div class="stat-card secondary">
+                <div class="stat-header">
+                    <span class="stat-label">Transactions</span>
+                    <div class="stat-icon">
+                        <i data-lucide="receipt"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ transaction_count }}</div>
+            </div>
+
+            <div class="stat-card neutral">
+                <div class="stat-header">
+                    <span class="stat-label">Top Category</span>
+                    <div class="stat-icon">
+                        <i data-lucide="star"></i>
+                    </div>
+                </div>
+                <div class="stat-value stat-value-small">{{ top_category }}</div>
+            </div>
+        </div>
+    </div>
+
+    {# Category Breakdown #}
+    {% if categories %}
+    <div class="profile-section">
+        <div class="profile-section-header">
+            <h2 class="profile-section-title">
+                <i data-lucide="pie-chart"></i>
+                Spending by Category
+            </h2>
+        </div>
+        <div class="categories-card">
+            {% for cat in categories %}
+            <div class="category-item">
+                <div class="category-header">
+                    <span class="category-name">
+                        <i data-lucide="tag"></i>
+                        {{ cat.category }}
+                    </span>
+                    <span class="category-amount">Rs {{ "%.2f"|format(cat.total) }}</span>
+                </div>
+                <div class="category-bar-track">
+                    {% set bar_class = 'secondary' if loop.index == 2 else ('tertiary' if loop.index > 2 else '') %}
+                    <div class="category-bar {{ bar_class }}" style="width: {{ cat.percentage }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Recent Transactions #}
+    <div class="profile-section">
+        <div class="profile-section-header">
+            <h2 class="profile-section-title">
+                <i data-lucide="arrow-up-right"></i>
+                Recent Transactions
+            </h2>
+        </div>
+
+        {% if recent %}
+        <div class="expenses-list">
+            {% for expense in recent %}
+            <div class="expense-item">
+                <div class="expense-icon">
+                    <i data-lucide="arrow-up-right"></i>
+                </div>
+                <div class="expense-details">
+                    <div class="expense-desc">{{ expense.description or 'No description' }}</div>
+                    <div class="expense-meta">
+                        <span class="expense-category">{{ expense.category }}</span>
+                        <span class="expense-date">
+                            <i data-lucide="calendar"></i>
+                            {{ expense.date }}
+                        </span>
+                    </div>
+                </div>
+                <div class="expense-amount">Rs {{ "%.2f"|format(expense.amount) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="expenses-list">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i data-lucide="receipt"></i>
+                </div>
+                <h3>No transactions yet</h3>
+                <p>Start tracking your expenses to see them here.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
