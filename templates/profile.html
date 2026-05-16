@@ -2,6 +2,10 @@
 
 {% block title %}Profile — Spendly{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
 {% block content %}
 <section class="profile-page">
     {# Profile Header #}
@@ -16,6 +20,33 @@
             </div>
         </div>
     </div>
+
+    {# Date Filter Bar #}
+    <div class="profile-section filter-bar">
+        <div class="filter-presets">
+            <a href="{{ url_for('profile') }}" class="filter-btn {% if not date_from and not date_to %}active{% endif %}">All Time</a>
+            <a href="{{ url_for('profile', date_from=preset_this_month_from, date_to=preset_this_month_to) }}" class="filter-btn {% if date_from == preset_this_month_from and date_to == preset_this_month_to %}active{% endif %}">This Month</a>
+            <a href="{{ url_for('profile', date_from=preset_3months_from, date_to=preset_3months_to) }}" class="filter-btn {% if date_from == preset_3months_from and date_to == preset_3months_to %}active{% endif %}">Last 3 Months</a>
+            <a href="{{ url_for('profile', date_from=preset_6months_from, date_to=preset_6months_to) }}" class="filter-btn {% if date_from == preset_6months_from and date_to == preset_6months_to %}active{% endif %}">Last 6 Months</a>
+        </div>
+        <form class="filter-custom" method="get" action="{{ url_for('profile') }}">
+            <input type="date" name="date_from" value="{{ date_from or '' }}" class="date-input">
+            <span class="date-separator">to</span>
+            <input type="date" name="date_to" value="{{ date_to or '' }}" class="date-input">
+            <button type="submit" class="filter-apply-btn">Apply</button>
+        </form>
+    </div>
+
+    {# Flash Messages #}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
 
     {# Stats Row #}
     <div class="profile-section">

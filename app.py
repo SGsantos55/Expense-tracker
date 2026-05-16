@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, date as date_obj, timedelta
 from database.db import get_db, init_db, seed_db
 from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
 
@@ -126,9 +126,36 @@ def profile():
         return redirect(url_for("login"))
 
     user = get_user_by_id(g.user_id)
-    stats = get_summary_stats(g.user_id)
-    recent = get_recent_transactions(g.user_id)
-    categories = get_category_breakdown(g.user_id)
+
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    validated_from = None
+    validated_to = None
+
+    if date_from or date_to:
+        try:
+            if date_from:
+                validated_from = datetime.strptime(date_from, "%Y-%m-%d").strftime("%Y-%m-%d")
+            if date_to:
+                validated_to = datetime.strptime(date_to, "%Y-%m-%d").strftime("%Y-%m-%d")
+        except ValueError:
+            flash("Invalid date format. Showing all expenses.")
+            validated_from = None
+            validated_to = None
+
+        if validated_from and validated_to:
+            if validated_from > validated_to:
+                flash("Start date must be before end date.")
+                validated_from = None
+                validated_to = None
+
+    stats = get_summary_stats(g.user_id, validated_from, validated_to)
+    recent = get_recent_transactions(g.user_id, 10, validated_from, validated_to)
+    categories = get_category_breakdown(g.user_id, validated_from, validated_to)
+
+    today = date_obj.today()
+    first_day_of_month = today.replace(day=1)
 
     return render_template("profile.html",
         user=user,
@@ -138,7 +165,15 @@ def profile():
         transaction_count=stats["transaction_count"],
         top_category=stats["top_category"],
         categories=categories,
-        recent=recent
+        recent=recent,
+        date_from=validated_from,
+        date_to=validated_to,
+        preset_this_month_from=first_day_of_month.strftime("%Y-%m-%d"),
+        preset_this_month_to=today.strftime("%Y-%m-%d"),
+        preset_3months_from=(today - timedelta(days=90)).strftime("%Y-%m-%d"),
+        preset_3months_to=today.strftime("%Y-%m-%d"),
+        preset_6months_from=(today - timedelta(days=180)).strftime("%Y-%m-%d"),
+        preset_6months_to=today.strftime("%Y-%m-%d")
     )
 
 
