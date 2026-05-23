@@ -123,26 +123,28 @@
         </div>
 
         {% if recent %}
-        <div class="expenses-list">
-            {% for expense in recent %}
-            <div class="expense-item">
-                <div class="expense-icon">
-                    <i data-lucide="arrow-up-right"></i>
-                </div>
-                <div class="expense-details">
-                    <div class="expense-desc">{{ expense.description or 'No description' }}</div>
-                    <div class="expense-meta">
-                        <span class="expense-category">{{ expense.category }}</span>
-                        <span class="expense-date">
-                            <i data-lucide="calendar"></i>
-                            {{ expense.date }}
-                        </span>
-                    </div>
-                </div>
-                <div class="expense-amount">Rs {{ "%.2f"|format(expense.amount) }}</div>
-            </div>
-            {% endfor %}
-        </div>
+        <table class="expenses-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in recent %}
+                <tr>
+                    <td>{{ expense.description or 'No description' }}</td>
+                    <td>{{ expense.category }}</td>
+                    <td>{{ expense.date }}</td>
+                    <td>Rs {{ "%.2f"|format(expense.amount) }}</td>
+                    <td><a href="{{ url_for('edit_expense', id=expense.id) }}" class="btn-edit">Edit</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
         <div class="expenses-list">
             <div class="empty-state">

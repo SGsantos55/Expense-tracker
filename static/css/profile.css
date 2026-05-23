@@ -167,3 +167,60 @@
     border: 1px solid var(--danger);
     border-radius: var(--radius-sm);
 }
+
+/* ------------------------------------------------------------------ */
+/* Expenses Table                                                      */
+/* ------------------------------------------------------------------ */
+
+.expenses-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: var(--radius-md);
+}
+
+.expenses-table th,
+.expenses-table td {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.expenses-table th {
+    color: var(--ink-soft);
+    font-weight: 600;
+    background: var(--bg-light);
+    border-bottom: 2px solid var(--border);
+}
+
+.expenses-table tr:last-child td {
+    border-bottom: none;
+}
+
+.expenses-table tr:hover {
+    background-color: var(--bg-light);
+}
+
+.btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--neon-green);
+    border: 1px solid var(--neon-green);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-edit:hover {
+    background: var(--neon-green);
+    color: white;
+    border-color: var(--neon-green);
+}

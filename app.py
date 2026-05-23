@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, flash, url_for, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense
 
 VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
 
@@ -266,9 +266,75 @@ def add_expense():
     return render_template("expenses/add_expense.html", date=today)
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        expense = get_expense_by_id(id, g.user_id)
+        if expense is None:
+            # Not found or not owned by user
+            return "", 404
+
+        return render_template(
+            "expenses/edit_expense.html",
+            expense=expense,
+            categories=VALID_CATEGORIES
+        )
+
+    # POST request
+    expense = get_expense_by_id(id, g.user_id)
+    if expense is None:
+        # Not found or not owned by user
+        return "", 404
+
+    # Validate form data using the same validation as add_expense
+    errors = validate_expense_form(request.form)
+
+    if errors:
+        # Re-render form with errors and submitted values
+        return render_template(
+            "expenses/edit_expense.html",
+            errors=errors,
+            amount=request.form.get("amount", "").strip(),
+            category=request.form.get("category", "").strip(),
+            date=request.form.get("date", "").strip(),
+            description=request.form.get("description", "").strip(),
+            expense={"id": id}  # Pass minimal expense obj for form action URL
+        )
+
+    # Update the expense
+    amount_str = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date_str = request.form.get("date", "").strip()
+    description_raw = request.form.get("description", "").strip()
+    description = None if not description_raw else description_raw
+
+    success = update_expense(
+        expense_id=id,
+        user_id=g.user_id,
+        amount=float(amount_str),
+        category=category,
+        date=date_str,
+        description=description
+    )
+
+    if success:
+        flash("Expense updated successfully!")
+        return redirect(url_for("profile"))
+    else:
+        # This shouldn't happen if we got the expense earlier, but handle gracefully
+        flash("An error occurred while updating your expense. Please try again.")
+        return render_template(
+            "expenses/edit_expense.html",
+            errors=["An error occurred while updating your expense. Please try again."],
+            amount=amount_str,
+            category=category,
+            date=date_str,
+            description=description_raw,
+            expense={"id": id}
+        )
 
 
 @app.route("/expenses/<int:id>/delete")

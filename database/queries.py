@@ -75,13 +75,14 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
             params = [user_id] + [date_from, date_to] + [limit]
 
         rows = conn.execute(
-            f"""SELECT date, description, category, amount
+            f"""SELECT id, date, description, category, amount
                FROM expenses WHERE user_id = ?{date_filter}
                ORDER BY date DESC, id DESC LIMIT ?""",
             params
         ).fetchall()
         return [
             {
+                "id": row["id"],
                 "date": row["date"],
                 "description": row["description"] or "",
                 "category": row["category"],
@@ -89,6 +90,58 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
             }
             for row in rows
         ]
+    finally:
+        conn.close()
+
+
+def get_expense_by_id(expense_id, user_id):
+    """Return a single expense dict if it belongs to the user, None otherwise."""
+    conn = get_db()
+    try:
+        expense = conn.execute(
+            """SELECT id, amount, category, date, description
+               FROM expenses WHERE id = ? AND user_id = ?""",
+            (expense_id, user_id)
+        ).fetchone()
+
+        if not expense:
+            return None
+
+        return {
+            "id": expense["id"],
+            "amount": expense["amount"],
+            "category": expense["category"],
+            "date": expense["date"],
+            "description": expense["description"]
+        }
+    finally:
+        conn.close()
+
+
+def update_expense(expense_id, user_id, amount, category, date, description=None):
+    """Update an existing expense if it belongs to the user.
+
+    Args:
+        expense_id (int): The ID of the expense to update
+        user_id (int): The ID of the user (for ownership verification)
+        amount (float): The expense amount
+        category (str): The expense category
+        date (str): The expense date in YYYY-MM-DD format
+        description (str, optional): The expense description
+
+    Returns:
+        bool: True if update succeeded, False otherwise
+    """
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            """UPDATE expenses
+               SET amount = ?, category = ?, date = ?, description = ?
+               WHERE id = ? AND user_id = ?""",
+            (amount, category, date, description, expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
     finally:
         conn.close()
 
