@@ -146,7 +146,30 @@ def update_expense(expense_id, user_id, amount, category, date, description=None
         conn.close()
 
 
+def delete_expense(expense_id, user_id):
+    """Delete an expense if it belongs to the user.
+
+    Args:
+        expense_id (int): The ID of the expense to delete
+        user_id (int): The ID of the user (for ownership verification)
+
+    Returns:
+        bool: True if deletion succeeded, False otherwise
+    """
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+            (expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
 def get_category_breakdown(user_id, date_from=None, date_to=None):
+
     """Return list of categories with amounts and percentages summing to 100."""
     conn = get_db()
     try:

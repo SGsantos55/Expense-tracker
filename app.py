@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, flash, url_for, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense
 
 VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
 
@@ -337,9 +337,22 @@ def edit_expense(id):
         )
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    expense = get_expense_by_id(id, g.user_id)
+    if expense is None:
+        return "", 404
+
+    if db_delete_expense(id, g.user_id):
+        flash("Expense deleted successfully!")
+    else:
+        flash("An error occurred while deleting the expense.")
+
+    return redirect(url_for("profile"))
+
 
 
 if __name__ == "__main__":
