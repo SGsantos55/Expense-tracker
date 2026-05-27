@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Spendly — Track Every Rupee{% endblock %}
+{% block title %}MoneyWallet — Track Every Rupee{% endblock %}
 
 {% block head %}
 <style>
@@ -319,7 +319,7 @@
                 <span class="accent">money goes.</span>
             </h1>
             <p class="hero-subtext">
-                Track expenses, analyze spending patterns, and take control of your finances — all in one beautifully simple app.
+                Track expenses, understand your spending, and manage your money with confidence.
             </p>
             <div class="hero-actions">
                 <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
@@ -335,12 +335,12 @@
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-label">This Month</div>
-                    <div class="stat-value">₹18,450</div>
+                    <div class="stat-value">Rs18,450</div>
                     <div class="stat-status up">+12% vs last month</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Budget Left</div>
-                    <div class="stat-value">₹31,550</div>
+                    <div class="stat-value">Rs31,550</div>
                     <div class="stat-status">43% remaining</div>
                 </div>
                 <div class="stat-card">
@@ -355,35 +355,35 @@
                     <div class="category-bar-track">
                         <div class="category-bar food" style="width: 65%"></div>
                     </div>
-                    <span class="category-amount">₹5,200</span>
+                    <span class="category-amount">Rs5,200</span>
                 </div>
                 <div class="category-row">
                     <span class="category-name">Travel</span>
                     <div class="category-bar-track">
                         <div class="category-bar travel" style="width: 45%"></div>
                     </div>
-                    <span class="category-amount">₹3,800</span>
+                    <span class="category-amount">Rs3,800</span>
                 </div>
                 <div class="category-row">
                     <span class="category-name">Bills</span>
                     <div class="category-bar-track">
                         <div class="category-bar bills" style="width: 38%"></div>
                     </div>
-                    <span class="category-amount">₹4,100</span>
+                    <span class="category-amount">Rs4,100</span>
                 </div>
                 <div class="category-row">
                     <span class="category-name">Shopping</span>
                     <div class="category-bar-track">
                         <div class="category-bar shopping" style="width: 25%"></div>
                     </div>
-                    <span class="category-amount">₹3,150</span>
+                    <span class="category-amount">Rs3,150</span>
                 </div>
                 <div class="category-row">
                     <span class="category-name">Health</span>
                     <div class="category-bar-track">
                         <div class="category-bar health" style="width: 15%"></div>
                     </div>
-                    <span class="category-amount">₹2,200</span>
+                    <span class="category-amount">Rs2,200</span>
                 </div>
             </div>
         </div>
@@ -393,7 +393,7 @@
 <section class="features">
     <div class="features-inner">
         <div class="feature-card">
-            <div class="feature-icon">₹</div>
+            <div class="feature-icon">Rs</div>
             <h3 class="feature-title">Log expenses instantly</h3>
             <p class="feature-body">Add any expense in seconds. Category, amount, date, description — all in one simple form.</p>
         </div>
@@ -413,7 +413,7 @@
 <section class="cta-section">
     <div class="cta-inner">
         <h2 class="cta-title">Ready to take control?</h2>
-        <p class="cta-body">Join thousands of people who track their expenses with Spendly.</p>
+        <p class="cta-body">Join thousands of people who track their expenses with MoneyWallet.</p>
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
