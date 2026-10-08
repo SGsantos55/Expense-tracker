@@ -239,3 +239,31 @@ def insert_expense(user_id, amount, category, date, description=None):
         return cursor.lastrowid
     finally:
         conn.close()
+
+def insert_contact_message(name, email, subject, message):
+    """Insert a contact form submission and return its new ID."""
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            """INSERT INTO contact_messages (name, email, subject, message)
+               VALUES (?, ?, ?, ?)""",
+            (name, email, subject, message)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_all_contact_messages():
+    """Return all contact messages, newest first."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """SELECT id, name, email, subject, message, created_at
+               FROM contact_messages
+               ORDER BY created_at DESC, id DESC"""
+        ).fetchall()
+        return rows
+    finally:
+        conn.close()
