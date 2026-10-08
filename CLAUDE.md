@@ -58,6 +58,7 @@ expense-tracker/
 - `/login` - Login
 - `/terms` - Terms & conditions
 - `/privacy` - Privacy policy
+- `/about` - About Us page (public)
 - `/contact` - Contact Us page (public form; submissions stored in `contact_messages`)
 - `/admin/messages` - Admin-only list of contact submissions (single admin by email; 404 otherwise)
 - `/logout` - Logout (placeholder)

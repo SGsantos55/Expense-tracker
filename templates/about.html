@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}About Us | ExpenseTracker — Free Expense Tracker{% endblock %}
+{% block meta_description %}Learn about ExpenseTracker, the free expense tracker app built to help you log spending, categorize costs and see where your money goes.{% endblock %}
+
+{% block head %}
+<style>
+    .legal-page {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 3rem 2rem 5rem;
+    }
+    .legal-page h1 {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        color: var(--ink);
+        margin-bottom: 0.5rem;
+    }
+    .legal-meta {
+        color: var(--ink-faint);
+        font-size: 0.85rem;
+        margin-bottom: 3rem;
+    }
+    .legal-section {
+        margin-bottom: 2.5rem;
+    }
+    .legal-section h2 {
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .legal-section p {
+        font-family: var(--font-body);
+        line-height: 1.75;
+        color: var(--ink-muted);
+    }
+    .legal-section ul {
+        margin: 0.5rem 0 1rem 1.5rem;
+        line-height: 1.8;
+        color: var(--ink-muted);
+    }
+    .legal-section li {
+        margin-bottom: 0.4rem;
+    }
+    .about-cta {
+        margin-top: 1rem;
+    }
+    @media (max-width: 640px) {
+        .legal-page { padding: 2rem 1.25rem 4rem; }
+        .legal-page h1 { font-size: 2rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="legal-page">
+    <h1>About Us</h1>
+    <p class="legal-meta">Track every rupee. Own your finances.</p>
+
+    <div class="legal-section">
+        <h2>Who we are</h2>
+        <p>ExpenseTracker is a free expense tracker app built to make managing money simple.
+        We believe everyone deserves a clear picture of their spending without wrestling with
+        fragile spreadsheets or paying for bloated software. Our tool lets you log expenses in
+        seconds, organize them by category and instantly see where your money goes.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>Our mission</h2>
+        <p>Our mission is to help people, small businesses and self-employed workers take control
+        of their finances. By turning everyday spending into clear monthly reports, we make it
+        easier to build better habits, stick to a budget and save more of what you earn.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>What you can do</h2>
+        <ul>
+            <li>Log personal, household and business expenses in one place</li>
+            <li>Organize spending into clear categories</li>
+            <li>See monthly totals and trends at a glance</li>
+            <li>Track your money for free — no subscription, no credit card</li>
+        </ul>
+    </div>
+
+    <div class="legal-section">
+        <h2>Get in touch</h2>
+        <p>Have a question, idea or some feedback? We'd love to hear from you.</p>
+        <p class="about-cta"><a href="{{ url_for('contact') }}">Contact us →</a></p>
+    </div>
+</div>
+{% endblock %}

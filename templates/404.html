@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404) | ExpenseTracker{% endblock %}
+{% block meta_description %}The page you're looking for could not be found.{% endblock %}
+
+{% block head %}
+<style>
+    .error-page {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 5rem 2rem 6rem;
+        text-align: center;
+    }
+    .error-code {
+        font-family: var(--font-display);
+        font-size: 6rem;
+        line-height: 1;
+        color: var(--neon-green);
+        margin-bottom: 0.5rem;
+    }
+    .error-title {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--ink);
+        margin-bottom: 1rem;
+    }
+    .error-body {
+        font-family: var(--font-body);
+        color: var(--ink-muted);
+        line-height: 1.7;
+        max-width: 32rem;
+        margin: 0 auto 2rem;
+    }
+    @media (max-width: 640px) {
+        .error-page { padding: 3.5rem 1.25rem 4.5rem; }
+        .error-code { font-size: 4.5rem; }
+        .error-title { font-size: 1.6rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <p class="error-code">404</p>
+    <h1 class="error-title">Page not found</h1>
+    <p class="error-body">The page you're looking for doesn't exist or may have been moved.
+    Let's get you back on track.</p>
+    <a href="{{ url_for('landing') }}" class="btn-primary">Back to home</a>
+</div>
+{% endblock %}

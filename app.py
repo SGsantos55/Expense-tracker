@@ -83,7 +83,7 @@ def public_assets(filename):
         "web-app-manifest-512x512.png",
     }
     if filename not in allowed:
-        return "", 404
+        abort(404)
     return send_from_directory("public", filename)
 
 
@@ -103,7 +103,7 @@ def robots_txt():
 @app.route("/sitemap.xml")
 def sitemap_xml():
     root = request.url_root
-    public_pages = ["", "login", "register", "terms", "privacy"]
+    public_pages = ["", "login", "register", "terms", "privacy", "about", "contact"]
     urls = "".join(
         f"<url><loc>{root}{path}</loc><changefreq>weekly</changefreq></url>"
         for path in public_pages
@@ -203,6 +203,11 @@ def terms():
 @app.route("/privacy")
 def privacy():
     return render_template("privacy.html")
+
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 
 @app.route("/contact", methods=["GET", "POST"])
@@ -457,6 +462,19 @@ def delete_expense(id):
 
     return redirect(url_for("profile"))
 
+
+# ------------------------------------------------------------------ #
+# Error handlers                                                      #
+# ------------------------------------------------------------------ #
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return render_template("500.html"), 500
 
 
 if __name__ == "__main__":
