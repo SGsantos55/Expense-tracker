@@ -1,8 +1,183 @@
 {% extends "base.html" %}
 
-{% block title %}MoneyWallet — Track Every Rupee{% endblock %}
+{% block title %}Free Expense Tracker App — Track My Spending Online | ExpenseTracker{% endblock %}
+
+{% block meta_description %}ExpenseTracker is a free expense tracker app to track your spending, log business and personal costs, and see where your money goes. The best free expense tracker with monthly reports, categories and simple income and expense tracking.{% endblock %}
+
+{% block og_title %}Free Expense Tracker App — Track My Spending Online{% endblock %}
+{% block og_description %}Use the best free expense tracker to log spending, categorize costs and understand your money. Great for small business, self employed and personal budgets.{% endblock %}
+{% block twitter_title %}Free Expense Tracker App — Track My Spending Online{% endblock %}
+{% block twitter_description %}The best free expense tracker to log spending, categorize costs and see where your money goes.{% endblock %}
 
 {% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "ExpenseTracker",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "description": "ExpenseTracker is a free expense tracker app to track your spending, log business and personal expenses, categorize costs and view monthly income and expense reports.",
+  "url": "{{ request.base_url }}",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I track my spending automatically?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Create a free ExpenseTracker account and log each expense with its amount, category and date. The app instantly groups and totals your spending so you can track my spending habits and see monthly trends without manual spreadsheets."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best free app to track my spending?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "ExpenseTracker is a best free expense tracker that works in any browser. It is free to use, needs no credit card and lets you track your spending by category with clear monthly reports."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I track my spending categories?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Assign a category such as Food, Travel, Bills or Shopping to every expense. ExpenseTracker then builds a category breakdown so you can see exactly where your money goes each month."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is ExpenseTracker really a free expense tracker?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. ExpenseTracker is a completely free expense tracker app for small business, self employed workers and personal budgets, with no subscription and no credit card required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best budget tracker app?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>The best budget tracker app is one that is free, easy to use and shows where your money goes. ExpenseTracker lets you set categories, log spending in seconds and view clear monthly reports in any browser, making it a top choice for everyday budgeting.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the best expense tracker tools?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>The best expense tracker tools let you record spending, organize it by category and review trends over time. ExpenseTracker combines all of these in one free, browser-based app so you do not need separate spreadsheets or paid software.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What's the best household expense tracker?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>The best household expense tracker makes it simple to log groceries, bills, rent and family spending in one place. ExpenseTracker groups household costs by category and shows a monthly breakdown so your whole family can see where the money goes.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the benefits of having an expense tracker?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>An expense tracker helps you understand your spending, stick to a budget, cut wasteful costs and save more. With ExpenseTracker you get instant category totals and monthly reports that make it easy to spot patterns and take control of your money.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does an expense tracker app do?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>An expense tracker app records each purchase, sorts it into categories and totals your spending so you can see where your money goes. ExpenseTracker does this automatically and turns your logged expenses into simple monthly reports.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I use an expense tracker app?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>Yes. If you want to save money, avoid overspending or prepare for tax season, an expense tracker app makes it effortless. ExpenseTracker is free and takes only seconds a day, so it is worth using for personal, household and business budgets.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are expense tracker apps worth the cost?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>Expense tracker apps are worth it because the money and time they save usually outweighs any cost. ExpenseTracker goes further by being completely free, with no subscription or credit card required, so you get the benefits at no cost at all.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best way to track your expenses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>The best way to track your expenses is to log each purchase as it happens and review it by category. ExpenseTracker makes this easy by letting you add an expense in seconds and instantly see totals and monthly trends without manual spreadsheets.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What kind of expenses can I track?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>You can track any expense, including food, travel, rent, bills, shopping, subscriptions and business costs. ExpenseTracker lets you assign a category to each one so both personal and business spending stays organized in a single place.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How to keep track of my expenses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>To keep track of your expenses, record every purchase with its amount, category and date in one place. ExpenseTracker stores and totals them automatically, so you always have an up to date view of your spending without juggling receipts.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I keep track of all my expenses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>Keep track of all your expenses by logging them in a single tool instead of scattered notes and receipts. ExpenseTracker centralizes every expense, groups it by category and shows clear monthly reports so nothing slips through the cracks.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How to track my business expenses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>Track your business expenses by logging each cost under categories like travel, supplies or software as it happens. ExpenseTracker is a free expense tracker app for small business and self employed workers that keeps business spending organized and ready for tax season.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I track business expenses on my phone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>ExpenseTracker works in any mobile browser, so you can track business expenses on your phone wherever you are. Just open the app, add an expense in seconds and it is instantly categorized and totaled for easy reporting later.</p>"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How to track my expenses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "<p>Track your expenses by creating a free ExpenseTracker account and logging each purchase with its amount, category and date. The app automatically groups and totals your spending so you can see where your money goes every month.</p>"
+      }
+    }
+  ]
+}
+</script>
 <style>
     :root {
         --neon-green: #00E58F;
@@ -245,6 +420,55 @@
         .stats-row { grid-template-columns: 1fr; }
     }
 
+    /* SEO content section */
+    .seo-content {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+    }
+
+    .seo-content h2 {
+        font-family: var(--font-body);
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -0.02em;
+        margin: 2.5rem 0 1rem;
+        line-height: 1.2;
+    }
+
+    .seo-content h2:first-child { margin-top: 0; }
+
+    .seo-content h3 {
+        font-family: var(--font-body);
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 1.75rem 0 0.5rem;
+    }
+
+    .seo-content p {
+        font-size: 1.02rem;
+        line-height: 1.75;
+        color: var(--ink-muted);
+        margin-bottom: 1.1rem;
+    }
+
+    .seo-content ul {
+        margin: 0 0 1.25rem 1.25rem;
+        color: var(--ink-muted);
+        line-height: 1.8;
+    }
+
+    .seo-content li { margin-bottom: 0.35rem; }
+
+    .seo-content a { color: var(--neon-green-dark); font-weight: 600; }
+    .seo-content a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+        .seo-content { padding: 2.5rem 1.25rem; }
+    }
+
     /* Modal Styles */
     .modal-overlay {
         display: none;
@@ -313,13 +537,14 @@
 <section class="hero-section">
     <div class="hero-container">
         <div style="text-align: center;">
-            <div class="hero-badge">• Free to use • No credit card needed</div>
+            <div class="hero-badge">• 100% free expense tracker • No credit card needed</div>
             <h1 class="hero-heading">
-                Know where your<br>
-                <span class="accent">money goes.</span>
+                Free Expense Tracker to<br>
+                <span class="accent">track your spending.</span>
             </h1>
             <p class="hero-subtext">
-                Track expenses, understand your spending, and manage your money with confidence.
+                ExpenseTracker is a free expense tracker app for small business, self employed and
+                personal budgets. Log expenses, track your spending and see where your money goes.
             </p>
             <div class="hero-actions">
                 <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
@@ -410,10 +635,113 @@
     </div>
 </section>
 
+<section class="seo-content">
+    <h2>The Free Expense Tracker That Shows Where Your Money Goes</h2>
+    <p>
+        ExpenseTracker is a <strong>free expense tracker</strong> built for anyone who wants a simple,
+        honest answer to one question: where does my money actually go? Instead of juggling a messy
+        <strong>free expense tracker spreadsheet</strong> or copying numbers into a
+        <strong>free expense tracker Google Sheets</strong> file, you log each cost in seconds and let
+        the app do the math. It is the <strong>best free expense tracker</strong> for people who want
+        results without the busywork — no subscriptions, no credit card and no complicated setup.
+    </p>
+
+    <h2>Why ExpenseTracker Is the Best App to Track My Spending</h2>
+    <p>
+        A good <strong>expense tracker app</strong> should get out of your way. With ExpenseTracker you
+        add an amount, pick a category, set a date and you are done. Every entry feeds a live
+        <strong>monthly expense tracker</strong> view, so your totals, categories and trends update
+        instantly. Many people ask, "what is the best free app to track my spending?" — the honest
+        answer is the one you will actually use every day, and ExpenseTracker is designed to be exactly
+        that: fast, clear and genuinely free.
+    </p>
+    <ul>
+        <li><strong>Business expense tracker:</strong> keep client, travel and supply costs organized for tax time.</li>
+        <li><strong>Self employed expense tracker:</strong> separate work spending from personal spending with categories.</li>
+        <li><strong>Income and expense tracker:</strong> see money in and money out in one simple dashboard.</li>
+        <li><strong>Monthly expense tracker:</strong> compare this month to last month at a glance.</li>
+    </ul>
+
+    <h2>A Free Expense Tracker App for Small Business and Freelancers</h2>
+    <p>
+        Running a small business means every rupee counts. ExpenseTracker works as a
+        <strong>free expense tracker app for small business</strong> owners, contractors and freelancers
+        who need a reliable <strong>business expense tracker</strong> without paying for bulky accounting
+        software. Because it runs in your browser, there is nothing to install — a lightweight
+        alternative to an <strong>expense tracker template</strong> you have to rebuild every month, and
+        a friendlier option than a static <strong>self employed expense tracker</strong> spreadsheet.
+    </p>
+
+    <h2>How to Track My Spending Habits (and Fix Them)</h2>
+    <p>
+        Learning how to track money spending is the first step to spending less. Here is
+        <strong>how to track my spending automatically</strong> with ExpenseTracker:
+    </p>
+    <ul>
+        <li>Create a free account.</li>
+        <li>Add each expense with a category such as Food, Travel, Bills or Shopping.</li>
+        <li>Open your dashboard to see where your money goes.</li>
+    </ul>
+    <p>
+        That category breakdown answers "how do I track my spending categories?" and helps you understand
+        <strong>how to track my spending habits</strong> over time. Reviewing your reports each week is
+        the simplest way to learn <strong>how do I track my spending effectively</strong> and to build
+        better money routines with a true <strong>income and expense tracker</strong>.
+    </p>
+
+    <h2>Track My Spending App — Free, Online, Anywhere</h2>
+    <p>
+        ExpenseTracker is a <strong>track my spending app</strong> that lives online, so your data is
+        available on any device. It is a genuine <strong>track my spending app free</strong> of charge —
+        the <strong>best app to track my spending</strong> without hidden costs. Whether you are saving
+        for a goal, tidying up your budget or preparing for tax season, this free expense tracker gives
+        you the clarity to take control of your money. Ditch the fragile free expense tracker Google
+        Sheets workbook and start tracking in minutes with a tool that does the counting for you.
+    </p>
+
+    <h3>Frequently Asked Questions</h3>
+    <p><strong>How do I track my spending automatically?</strong><br>
+        Log expenses as you go and ExpenseTracker groups and totals them for you — no formulas and no manual spreadsheet.</p>
+    <p><strong>What is the best free app to track my spending?</strong><br>
+        ExpenseTracker is a best free expense tracker that is free, browser-based and easy to use every day.</p>
+    <p><strong>How do I track my spending categories?</strong><br>
+        Tag every expense with a category and view the breakdown on your monthly dashboard.</p>
+    <p><strong>What is the best budget tracker app?</strong><br>
+        The best budget tracker app is free, quick to use and shows where your money goes — ExpenseTracker does all three in any browser.</p>
+    <p><strong>What are the best expense tracker tools?</strong><br>
+        The best expense tracker tools record spending, organize it by category and reveal trends. ExpenseTracker combines all of this in one free app.</p>
+    <p><strong>What's the best household expense tracker?</strong><br>
+        ExpenseTracker is a great household expense tracker — log groceries, bills and rent in one place and see a monthly family breakdown.</p>
+    <p><strong>What are the benefits of having an expense tracker?</strong><br>
+        You understand your spending, stick to a budget, cut waste and save more, with instant totals and monthly reports.</p>
+    <p><strong>What does an expense tracker app do?</strong><br>
+        It records each purchase, sorts it into categories and totals your spending so you can see exactly where your money goes.</p>
+    <p><strong>Should I use an expense tracker app?</strong><br>
+        Yes — if you want to save money or prepare for tax season, ExpenseTracker is free and takes only seconds a day.</p>
+    <p><strong>Are expense tracker apps worth the cost?</strong><br>
+        They usually save more than they cost, and ExpenseTracker is completely free with no subscription or credit card.</p>
+    <p><strong>What is the best way to track your expenses?</strong><br>
+        Log each purchase as it happens and review it by category — ExpenseTracker makes this effortless with instant totals.</p>
+    <p><strong>What kind of expenses can I track?</strong><br>
+        Any expense — food, travel, rent, bills, shopping, subscriptions and business costs — all organized by category.</p>
+    <p><strong>How to keep track of my expenses?</strong><br>
+        Record every purchase with its amount, category and date in one place and let ExpenseTracker total them automatically.</p>
+    <p><strong>How do I keep track of all my expenses?</strong><br>
+        Keep everything in one tool instead of scattered receipts — ExpenseTracker centralizes and categorizes every expense.</p>
+    <p><strong>How to track my business expenses?</strong><br>
+        Log each cost under categories like travel, supplies or software. ExpenseTracker is free for small business and self employed workers.</p>
+    <p><strong>How do I track business expenses on my phone?</strong><br>
+        ExpenseTracker works in any mobile browser, so you can add and categorize business expenses on your phone anywhere.</p>
+    <p><strong>How to track my expenses?</strong><br>
+        Create a free account and log each purchase with its amount, category and date — the app groups and totals it for you.</p>
+
+    <p><a href="{{ url_for('register') }}">Create your free account →</a></p>
+</section>
+
 <section class="cta-section">
     <div class="cta-inner">
         <h2 class="cta-title">Ready to take control?</h2>
-        <p class="cta-body">Join thousands of people who track their expenses with MoneyWallet.</p>
+        <p class="cta-body">Join thousands of people who track their expenses with ExpenseTracker.</p>
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>

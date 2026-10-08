@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory
+from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 from database.db import get_db, init_db, seed_db
@@ -79,6 +79,35 @@ def public_assets(filename):
     if filename not in allowed:
         return "", 404
     return send_from_directory("public", filename)
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /profile",
+        "Disallow: /expenses/",
+        "Disallow: /logout",
+        f"Sitemap: {request.url_root}sitemap.xml",
+    ]
+    return Response("\n".join(lines) + "\n", mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    root = request.url_root
+    public_pages = ["", "login", "register", "terms", "privacy"]
+    urls = "".join(
+        f"<url><loc>{root}{path}</loc><changefreq>weekly</changefreq></url>"
+        for path in public_pages
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{urls}</urlset>"
+    )
+    return Response(xml, mimetype="application/xml")
 
 
 @app.route("/")

@@ -3,7 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MoneyWallet{% endblock %}</title>
+    <title>{% block title %}Free Expense Tracker — Track Your Spending Online{% endblock %}</title>
+
+    <!-- Primary SEO meta -->
+    <meta name="description" content="{% block meta_description %}ExpenseTracker is a free expense tracker app to log spending, categorize costs and see where your money goes. Track your spending automatically with simple monthly reports.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}free expense tracker, free expense tracker app for small business, best free expense tracker, business expense tracker, expense tracker app, expense tracker template, self employed expense tracker, monthly expense tracker, income and expense tracker, track my spending app, how to track money spending, track my spending app free{% endblock %}">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="ExpenseTracker">
+    <meta name="theme-color" content="#00E58F">
+    <link rel="canonical" href="{% block canonical %}{{ request.base_url }}{% endblock %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="ExpenseTracker">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:title" content="{% block og_title %}Free Expense Tracker — Track Your Spending Online{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Track expenses for free. Log spending, categorize costs and see exactly where your money goes with the best free expense tracker app.{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.url_root }}web-app-manifest-512x512.png{% endblock %}">
+    <meta property="og:image:alt" content="ExpenseTracker — free expense tracker dashboard">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Free Expense Tracker — Track Your Spending Online{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Track expenses for free. Log spending, categorize costs and see exactly where your money goes.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.url_root }}web-app-manifest-512x512.png{% endblock %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
