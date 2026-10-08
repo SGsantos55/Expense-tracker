@@ -1,10 +1,16 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory, Response
+from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory, Response, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
+import os
+from dotenv import load_dotenv
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages
+
+load_dotenv()
 
 VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key-change-in-production"
@@ -197,6 +203,54 @@ def terms():
 @app.route("/privacy")
 def privacy():
     return render_template("privacy.html")
+
+
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        subject = request.form.get("subject", "").strip()
+        message = request.form.get("message", "").strip()
+
+        errors = []
+        if not name:
+            errors.append("Name is required")
+        if not email or "@" not in email:
+            errors.append("Valid email is required")
+        if not subject:
+            errors.append("Subject is required")
+        if not message:
+            errors.append("Message is required")
+
+        if errors:
+            return render_template(
+                "contact.html",
+                errors=errors,
+                name=name,
+                email=email,
+                subject=subject,
+                message=message
+            )
+
+        insert_contact_message(name, email, subject, message)
+        flash("Thanks for reaching out! We'll get back to you soon.")
+        return redirect(url_for("contact"))
+
+    return render_template("contact.html")
+
+
+@app.route("/admin/messages")
+def admin_messages():
+    if not g.user_id:
+        abort(404)
+
+    user = get_user_by_id(g.user_id)
+    if not ADMIN_EMAIL or not user or user["email"] != ADMIN_EMAIL:
+        abort(404)
+
+    messages = get_all_contact_messages()
+    return render_template("admin/messages.html", messages=messages)
 
 
 # ------------------------------------------------------------------ #

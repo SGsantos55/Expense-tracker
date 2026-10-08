@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Messages | ExpenseTracker Admin{% endblock %}
+{% block meta_description %}Admin view of contact form submissions.{% endblock %}
+
+{% block head %}
+<style>
+    .admin-page {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 3rem 2rem 5rem;
+    }
+    .admin-page h1 {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        color: var(--ink);
+        margin-bottom: 0.5rem;
+    }
+    .admin-meta {
+        color: var(--ink-faint);
+        font-size: 0.85rem;
+        margin-bottom: 2.5rem;
+    }
+    .admin-empty {
+        color: var(--ink-muted);
+        font-family: var(--font-body);
+        padding: 2rem 0;
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: var(--font-body);
+        font-size: 0.9rem;
+    }
+    .admin-table th,
+    .admin-table td {
+        text-align: left;
+        padding: 0.75rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+        color: var(--ink-muted);
+    }
+    .admin-table th {
+        color: var(--ink);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+    }
+    .admin-table .msg-cell {
+        color: var(--ink-soft);
+        line-height: 1.6;
+    }
+    .admin-date {
+        white-space: nowrap;
+        color: var(--ink-faint);
+    }
+    @media (max-width: 640px) {
+        .admin-page { padding: 2rem 1.25rem 4rem; }
+        .admin-page h1 { font-size: 2rem; }
+        .admin-table { font-size: 0.82rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1>Contact Messages</h1>
+    <p class="admin-meta">{{ messages|length }} message{{ '' if messages|length == 1 else 's' }}</p>
+
+    {% if messages %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Subject</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for msg in messages %}
+            <tr>
+                <td class="admin-date">{{ msg["created_at"] }}</td>
+                <td>{{ msg["name"] }}</td>
+                <td>{{ msg["email"] }}</td>
+                <td>{{ msg["subject"] }}</td>
+                <td class="msg-cell">{{ msg["message"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="admin-empty">No messages yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
