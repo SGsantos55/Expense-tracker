@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Expense" />
+    <link rel="manifest" href="/site.webmanifest" />
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -16,7 +22,7 @@
         <div class="nav-inner">
             <a href="{{ url_for('landing') }}" class="nav-brand">
                 <span class="brand-icon" style="color: var(--neon-green);">◈</span>
-                <span class="brand-name">MoneyWallet</span>
+                <span class="brand-name">ExpenseTracker</span>
             </a>
             <div class="nav-links">
                 <a href="#">Features</a>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, session, g
+from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 from database.db import get_db, init_db, seed_db
@@ -8,6 +8,11 @@ VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Sh
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key-change-in-production"
+
+with app.app_context():
+    init_db()
+    seed_db()
+
 
 
 # ------------------------------------------------------------------ #
@@ -59,6 +64,22 @@ def validate_expense_form(form):
 # ------------------------------------------------------------------ #
 # Routes                                                              #
 # ------------------------------------------------------------------ #
+
+@app.route("/<path:filename>")
+def public_assets(filename):
+    allowed = {
+        "favicon-96x96.png",
+        "favicon.svg",
+        "favicon.ico",
+        "apple-touch-icon.png",
+        "site.webmanifest",
+        "web-app-manifest-192x192.png",
+        "web-app-manifest-512x512.png",
+    }
+    if filename not in allowed:
+        return "", 404
+    return send_from_directory("public", filename)
+
 
 @app.route("/")
 def landing():
