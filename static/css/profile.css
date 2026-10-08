@@ -224,3 +224,74 @@
     color: white;
     border-color: var(--neon-green);
 }
+/* ------------------------------------------------------------------ */
+/* Responsive expenses table -> stacked cards on small screens        */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+    .expenses-table,
+    .expenses-table thead,
+    .expenses-table tbody,
+    .expenses-table tr,
+    .expenses-table td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Hide the header row visually but keep it for screen readers */
+    .expenses-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .expenses-table tr {
+        background: var(--paper-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .expenses-table tr:hover {
+        background: var(--paper-card);
+    }
+
+    .expenses-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        text-align: right;
+        border-bottom: 1px solid var(--border-soft);
+        padding: 10px 14px;
+    }
+
+    .expenses-table tr td:last-child {
+        border-bottom: none;
+    }
+
+    .expenses-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--ink-soft);
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    .expense-actions-cell {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .expense-actions-cell::before {
+        width: 100%;
+    }
+}
