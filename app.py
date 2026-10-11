@@ -4,7 +4,8 @@ from datetime import datetime, date as date_obj, timedelta
 import os
 from dotenv import load_dotenv
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export
+from database.excel import build_expense_workbook
 
 load_dotenv()
 
@@ -461,6 +462,42 @@ def delete_expense(id):
         flash("An error occurred while deleting the expense.")
 
     return redirect(url_for("profile"))
+
+
+@app.route("/expenses/export")
+def export_expenses():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    validated_from = None
+    validated_to = None
+
+    if date_from or date_to:
+        try:
+            if date_from:
+                validated_from = datetime.strptime(date_from, "%Y-%m-%d").strftime("%Y-%m-%d")
+            if date_to:
+                validated_to = datetime.strptime(date_to, "%Y-%m-%d").strftime("%Y-%m-%d")
+        except ValueError:
+            validated_from = None
+            validated_to = None
+
+        if validated_from and validated_to and validated_from > validated_to:
+            validated_from = None
+            validated_to = None
+
+    rows = get_expenses_for_export(g.user_id, validated_from, validated_to)
+    workbook_bytes = build_expense_workbook(rows)
+
+    filename = f"expenses_{date_obj.today().strftime('%Y-%m-%d')}.xlsx"
+    return Response(
+        workbook_bytes,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 # ------------------------------------------------------------------ #
