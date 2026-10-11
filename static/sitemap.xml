@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.example.com/</loc>
+    <loc>https://expensetracker.com.np/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.example.com/login</loc>
+    <loc>https://expensetracker.com.np/login</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.example.com/register</loc>
+    <loc>https://expensetracker.com.np/register</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.example.com/about</loc>
+    <loc>https://expensetracker.com.np/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.example.com/contact</loc>
+    <loc>https://expensetracker.com.np/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.example.com/terms</loc>
+    <loc>https://expensetracker.com.np/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.example.com/privacy</loc>
+    <loc>https://expensetracker.com.np/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
