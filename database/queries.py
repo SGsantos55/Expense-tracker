@@ -240,6 +240,44 @@ def insert_expense(user_id, amount, category, date, description=None):
     finally:
         conn.close()
 
+def get_expenses_for_export(user_id, date_from=None, date_to=None):
+    """Return all expenses for a user (no limit), newest first, for export.
+
+    Args:
+        user_id (int): The ID of the user whose expenses to export.
+        date_from (str, optional): Inclusive start date (YYYY-MM-DD).
+        date_to (str, optional): Inclusive end date (YYYY-MM-DD).
+
+    Returns:
+        list[dict]: Expenses with date, category, description, amount.
+    """
+    conn = get_db()
+    try:
+        params = [user_id]
+        date_filter = ""
+        if date_from and date_to:
+            date_filter = " AND date BETWEEN ? AND ?"
+            params.extend([date_from, date_to])
+
+        rows = conn.execute(
+            f"""SELECT date, category, description, amount
+               FROM expenses WHERE user_id = ?{date_filter}
+               ORDER BY date DESC, id DESC""",
+            params
+        ).fetchall()
+        return [
+            {
+                "date": row["date"],
+                "category": row["category"],
+                "description": row["description"] or "",
+                "amount": row["amount"]
+            }
+            for row in rows
+        ]
+    finally:
+        conn.close()
+
+
 def insert_contact_message(name, email, subject, message):
     """Insert a contact form submission and return its new ID."""
     conn = get_db()
