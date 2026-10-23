@@ -28,6 +28,57 @@ def get_user_by_id(user_id):
         conn.close()
 
 
+def get_user_by_google_id(google_id):
+    """Return the user row (id, name, email) for a Google account, or None."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT id, name, email FROM users WHERE google_id = ?",
+            (google_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def get_user_by_email(email):
+    """Return the user row (id, name, email, google_id) for an email, or None."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT id, name, email, google_id FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def link_google_id(user_id, google_id):
+    """Attach a Google account id to an existing user."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET google_id = ? WHERE id = ?",
+            (google_id, user_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def create_oauth_user(name, email, google_id):
+    """Create a new OAuth-only user (no password) and return the new id."""
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO users (name, email, password_hash, google_id) VALUES (?, ?, NULL, ?)",
+            (name, email, google_id)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
 def get_summary_stats(user_id, date_from=None, date_to=None):
     """Return dict with total_spent, transaction_count, top_category."""
     conn = get_db()
