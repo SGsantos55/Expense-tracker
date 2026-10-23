@@ -3,8 +3,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 import os
 from dotenv import load_dotenv
+from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user
 from database.excel import build_expense_workbook
 
 load_dotenv()
@@ -15,6 +16,19 @@ ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key-change-in-production"
+
+# ------------------------------------------------------------------ #
+# OAuth (Google) configuration                                        #
+# ------------------------------------------------------------------ #
+
+oauth = OAuth(app)
+oauth.register(
+    name="google",
+    client_id=os.environ.get("OAUTH_CLIENT_ID"),
+    client_secret=os.environ.get("OAUTH_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 
 with app.app_context():
     init_db()
@@ -187,13 +201,61 @@ def login():
         ).fetchone()
         conn.close()
 
-        if user and check_password_hash(user["password_hash"], password):
+        if user and user["password_hash"] and check_password_hash(user["password_hash"], password):
             session["user_id"] = user["id"]
             return redirect(url_for("profile"))
 
         return render_template("login.html", error="Invalid email or password", email=email)
 
     return render_template("login.html")
+
+
+# ------------------------------------------------------------------ #
+# Google OAuth login                                                   #
+# ------------------------------------------------------------------ #
+
+@app.route("/login/google")
+def login_google():
+    redirect_uri = url_for("login_google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route("/login/google/callback")
+def login_google_callback():
+    try:
+        token = oauth.google.authorize_access_token()
+    except Exception as e:
+        app.logger.error(f"Google OAuth failed: {e}")
+        flash("Google sign-in failed. Please try again.")
+        return redirect(url_for("login"))
+
+    userinfo = token.get("userinfo")
+    if not userinfo:
+        userinfo = oauth.google.userinfo(token=token)
+
+    google_id = userinfo.get("sub")
+    email = (userinfo.get("email") or "").strip().lower()
+    name = userinfo.get("name") or (email.split("@")[0] if email else "User")
+
+    if not google_id or not email:
+        flash("Google sign-in did not return the required account details.")
+        return redirect(url_for("login"))
+
+    # Match by google_id first, then link an existing email account, else create.
+    user = get_user_by_google_id(google_id)
+    if user:
+        user_id = user["id"]
+    else:
+        existing = get_user_by_email(email)
+        if existing:
+            user_id = existing["id"]
+            if not existing["google_id"]:
+                link_google_id(user_id, google_id)
+        else:
+            user_id = create_oauth_user(name, email, google_id)
+
+    session["user_id"] = user_id
+    return redirect(url_for("profile"))
 
 
 @app.route("/terms")
