@@ -24,6 +24,7 @@ def init_db():
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT,
                 google_id TEXT UNIQUE,
+                email_verified INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT DEFAULT (datetime('now'))
             )
         ''')
@@ -49,9 +50,34 @@ def init_db():
                 created_at TEXT DEFAULT (datetime('now'))
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS auth_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token_hash TEXT NOT NULL,
+                purpose TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                used_at TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+        conn.execute(
+            'CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_tokens_hash ON auth_tokens(token_hash)'
+        )
+        _run_migrations(conn)
         conn.commit()
     finally:
         conn.close()
+
+
+def _run_migrations(conn):
+    """Idempotent migrations for databases created before this schema."""
+    columns = {row['name'] for row in conn.execute('PRAGMA table_info(users)')}
+    if 'email_verified' not in columns:
+        conn.execute(
+            'ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'
+        )
 
 
 def seed_db():
@@ -64,7 +90,7 @@ def seed_db():
 
         password_hash = generate_password_hash('demo123')
         cursor = conn.execute(
-            'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
+            'INSERT INTO users (name, email, password_hash, email_verified) VALUES (?, ?, ?, 1)',
             ('Demo User', 'demo@spendly.com', password_hash)
         )
         user_id = cursor.lastrowid
