@@ -8,10 +8,10 @@ def delete_user(user_id):
     conn = get_db()
     try:
         # Delete dependent data first to avoid foreign key violations
-        conn.execute("DELETE FROM auth_tokens WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM expenses WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM auth_tokens WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM expenses WHERE user_id = %s", (user_id,))
         # Finally delete the user
-        cursor = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        cursor = conn.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         return cursor.rowcount > 0
     finally:
@@ -22,7 +22,7 @@ def get_user_by_id(user_id):
     conn = get_db()
     try:
         user = conn.execute(
-            "SELECT name, email, created_at FROM users WHERE id = ?",
+            "SELECT name, email, created_at FROM users WHERE id = %s",
             (user_id,)
         ).fetchone()
         if not user:
@@ -47,7 +47,7 @@ def get_user_by_google_id(google_id):
     conn = get_db()
     try:
         return conn.execute(
-            "SELECT id, name, email FROM users WHERE google_id = ?",
+            "SELECT id, name, email FROM users WHERE google_id = %s",
             (google_id,)
         ).fetchone()
     finally:
@@ -59,7 +59,7 @@ def get_user_by_email(email):
     conn = get_db()
     try:
         return conn.execute(
-            "SELECT id, name, email, google_id FROM users WHERE email = ?",
+            "SELECT id, name, email, google_id FROM users WHERE email = %s",
             (email,)
         ).fetchone()
     finally:
@@ -71,7 +71,7 @@ def link_google_id(user_id, google_id):
     conn = get_db()
     try:
         conn.execute(
-            "UPDATE users SET google_id = ? WHERE id = ?",
+            "UPDATE users SET google_id = %s WHERE id = %s",
             (google_id, user_id)
         )
         conn.commit()
@@ -83,12 +83,13 @@ def create_oauth_user(name, email, google_id):
     """Create a new OAuth-only user (no password) and return the new id."""
     conn = get_db()
     try:
-        cursor = conn.execute(
-            "INSERT INTO users (name, email, password_hash, google_id) VALUES (?, ?, NULL, ?)",
+        row = conn.execute(
+            "INSERT INTO users (name, email, password_hash, google_id) "
+            "VALUES (%s, %s, NULL, %s) RETURNING id",
             (name, email, google_id)
-        )
+        ).fetchone()
         conn.commit()
-        return cursor.lastrowid
+        return row["id"]
     finally:
         conn.close()
 
@@ -106,7 +107,7 @@ def get_user_by_email_for_auth(email):
     try:
         return conn.execute(
             "SELECT id, name, email, password_hash, email_verified, google_id "
-            "FROM users WHERE email = ?",
+            "FROM users WHERE email = %s",
             (email,)
         ).fetchone()
     finally:
@@ -118,7 +119,7 @@ def set_email_verified(user_id):
     conn = get_db()
     try:
         conn.execute(
-            "UPDATE users SET email_verified = 1 WHERE id = ?",
+            "UPDATE users SET email_verified = 1 WHERE id = %s",
             (user_id,)
         )
         conn.commit()
@@ -131,7 +132,7 @@ def update_password_hash(user_id, password_hash):
     conn = get_db()
     try:
         conn.execute(
-            "UPDATE users SET password_hash = ? WHERE id = ?",
+            "UPDATE users SET password_hash = %s WHERE id = %s",
             (password_hash, user_id)
         )
         conn.commit()
@@ -143,13 +144,13 @@ def create_auth_token(user_id, token_hash, purpose, expires_at):
     """Store a single-use auth token hash and return the new row id."""
     conn = get_db()
     try:
-        cursor = conn.execute(
+        row = conn.execute(
             "INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at) "
-            "VALUES (?, ?, ?, ?)",
+            "VALUES (%s, %s, %s, %s) RETURNING id",
             (user_id, token_hash, purpose, expires_at)
-        )
+        ).fetchone()
         conn.commit()
-        return cursor.lastrowid
+        return row["id"]
     finally:
         conn.close()
 
@@ -160,8 +161,8 @@ def get_valid_auth_token(token_hash, purpose):
     try:
         return conn.execute(
             "SELECT id, user_id, purpose, expires_at, used_at FROM auth_tokens "
-            "WHERE token_hash = ? AND purpose = ? AND used_at IS NULL "
-            "AND expires_at > datetime('now')",
+            "WHERE token_hash = %s AND purpose = %s AND used_at IS NULL "
+            "AND expires_at::timestamp > (now() AT TIME ZONE 'UTC')",
             (token_hash, purpose)
         ).fetchone()
     finally:
@@ -173,7 +174,8 @@ def mark_token_used(token_id):
     conn = get_db()
     try:
         conn.execute(
-            "UPDATE auth_tokens SET used_at = datetime('now') WHERE id = ?",
+            "UPDATE auth_tokens SET used_at = "
+            "to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') WHERE id = %s",
             (token_id,)
         )
         conn.commit()
@@ -188,11 +190,11 @@ def get_summary_stats(user_id, date_from=None, date_to=None):
         params = [user_id]
         date_filter = ""
         if date_from and date_to:
-            date_filter = " AND date BETWEEN ? AND ?"
+            date_filter = " AND date BETWEEN %s AND %s"
             params.extend([date_from, date_to])
 
         total_row = conn.execute(
-            f"SELECT SUM(amount) as total, COUNT(*) as count FROM expenses WHERE user_id = ?{date_filter}",
+            f"SELECT SUM(amount) as total, COUNT(*) as count FROM expenses WHERE user_id = %s{date_filter}",
             params
         ).fetchone()
 
@@ -201,7 +203,7 @@ def get_summary_stats(user_id, date_from=None, date_to=None):
 
         top_cat_row = conn.execute(
             f"""SELECT category, SUM(amount) as total
-               FROM expenses WHERE user_id = ?{date_filter}
+               FROM expenses WHERE user_id = %s{date_filter}
                GROUP BY category ORDER BY total DESC LIMIT 1""",
             params
         ).fetchone()
@@ -224,13 +226,13 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
         params = [user_id, limit]
         date_filter = ""
         if date_from and date_to:
-            date_filter = " AND date BETWEEN ? AND ?"
+            date_filter = " AND date BETWEEN %s AND %s"
             params = [user_id] + [date_from, date_to] + [limit]
 
         rows = conn.execute(
             f"""SELECT id, date, description, category, amount
-               FROM expenses WHERE user_id = ?{date_filter}
-               ORDER BY date DESC, id DESC LIMIT ?""",
+               FROM expenses WHERE user_id = %s{date_filter}
+               ORDER BY date DESC, id DESC LIMIT %s""",
             params
         ).fetchall()
         return [
@@ -253,7 +255,7 @@ def get_expense_by_id(expense_id, user_id):
     try:
         expense = conn.execute(
             """SELECT id, amount, category, date, description
-               FROM expenses WHERE id = ? AND user_id = ?""",
+               FROM expenses WHERE id = %s AND user_id = %s""",
             (expense_id, user_id)
         ).fetchone()
 
@@ -289,8 +291,8 @@ def update_expense(expense_id, user_id, amount, category, date, description=None
     try:
         cursor = conn.execute(
             """UPDATE expenses
-               SET amount = ?, category = ?, date = ?, description = ?
-               WHERE id = ? AND user_id = ?""",
+               SET amount = %s, category = %s, date = %s, description = %s
+               WHERE id = %s AND user_id = %s""",
             (amount, category, date, description, expense_id, user_id)
         )
         conn.commit()
@@ -312,7 +314,7 @@ def delete_expense(expense_id, user_id):
     conn = get_db()
     try:
         cursor = conn.execute(
-            "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+            "DELETE FROM expenses WHERE id = %s AND user_id = %s",
             (expense_id, user_id)
         )
         conn.commit()
@@ -329,12 +331,12 @@ def get_category_breakdown(user_id, date_from=None, date_to=None):
         params = [user_id]
         date_filter = ""
         if date_from and date_to:
-            date_filter = " AND date BETWEEN ? AND ?"
+            date_filter = " AND date BETWEEN %s AND %s"
             params.extend([date_from, date_to])
 
         rows = conn.execute(
             f"""SELECT category, SUM(amount) as total
-               FROM expenses WHERE user_id = ?{date_filter}
+               FROM expenses WHERE user_id = %s{date_filter}
                GROUP BY category ORDER BY total DESC""",
             params
         ).fetchall()
@@ -383,13 +385,13 @@ def insert_expense(user_id, amount, category, date, description=None):
     """
     conn = get_db()
     try:
-        cursor = conn.execute(
+        row = conn.execute(
             """INSERT INTO expenses (user_id, amount, category, date, description)
-               VALUES (?, ?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s, %s) RETURNING id""",
             (user_id, amount, category, date, description)
-        )
+        ).fetchone()
         conn.commit()
-        return cursor.lastrowid
+        return row["id"]
     finally:
         conn.close()
 
@@ -409,12 +411,12 @@ def get_expenses_for_export(user_id, date_from=None, date_to=None):
         params = [user_id]
         date_filter = ""
         if date_from and date_to:
-            date_filter = " AND date BETWEEN ? AND ?"
+            date_filter = " AND date BETWEEN %s AND %s"
             params.extend([date_from, date_to])
 
         rows = conn.execute(
             f"""SELECT date, category, description, amount
-               FROM expenses WHERE user_id = ?{date_filter}
+               FROM expenses WHERE user_id = %s{date_filter}
                ORDER BY date DESC, id DESC""",
             params
         ).fetchall()
@@ -435,13 +437,13 @@ def insert_contact_message(name, email, subject, message):
     """Insert a contact form submission and return its new ID."""
     conn = get_db()
     try:
-        cursor = conn.execute(
+        row = conn.execute(
             """INSERT INTO contact_messages (name, email, subject, message)
-               VALUES (?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s) RETURNING id""",
             (name, email, subject, message)
-        )
+        ).fetchone()
         conn.commit()
-        return cursor.lastrowid
+        return row["id"]
     finally:
         conn.close()
 

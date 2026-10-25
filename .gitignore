@@ -9,3 +9,5 @@ __pycache__/
 file.mdfile.md
 OAUTH_IMPLEMENTATION.md
 SMTP_IMPLEMENTATION.md
+.claude/specs/15-switch-database-to-postgres.md
+tests/conftest.py

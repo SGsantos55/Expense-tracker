@@ -23,7 +23,7 @@ def seed_user_id(app):
     """Get the demo user ID from seed data."""
     from database.db import get_db
     conn = get_db()
-    user = conn.execute("SELECT id FROM users WHERE email = ?", ("demo@spendly.com",)).fetchone()
+    user = conn.execute("SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)).fetchone()
     conn.close()
     return user["id"] if user else None
 
@@ -256,11 +256,11 @@ class TestEmptyDateRange:
         import time
         email = f"emptytest{int(time.time())}@test.com"
         conn.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
             ("Empty User", email, "dummyhash")
         )
         conn.commit()
-        new_user_id = conn.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
+        new_user_id = conn.execute("SELECT lastval() as id").fetchone()["id"]
         conn.close()
 
         # Create a new auth client for this user
@@ -281,11 +281,11 @@ class TestEmptyDateRange:
         import time
         email = f"emptycat{int(time.time())}@test.com"
         conn.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
             ("Empty Cat User", email, "dummyhash")
         )
         conn.commit()
-        new_user_id = conn.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
+        new_user_id = conn.execute("SELECT lastval() as id").fetchone()["id"]
         conn.close()
 
         # Create a new auth client for this user

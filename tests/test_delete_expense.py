@@ -20,7 +20,7 @@ def client(app):
 def seed_user_id(app):
     """Get the demo user ID from seed data."""
     conn = get_db()
-    user = conn.execute("SELECT id FROM users WHERE email = ?", ("demo@spendly.com",)).fetchone()
+    user = conn.execute("SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)).fetchone()
     conn.close()
     return user["id"] if user else None
 
@@ -36,7 +36,7 @@ def seed_expense_id(app, seed_user_id):
     """Get the first expense ID belonging to the seed user."""
     conn = get_db()
     expense = conn.execute(
-        "SELECT id FROM expenses WHERE user_id = ? ORDER BY id LIMIT 1",
+        "SELECT id FROM expenses WHERE user_id = %s ORDER BY id LIMIT 1",
         (seed_user_id,)
     ).fetchone()
     conn.close()
@@ -55,7 +55,7 @@ class TestDeleteExpenseUnit:
         assert result is True
 
         conn = get_db()
-        row = conn.execute("SELECT id FROM expenses WHERE id = ?", (seed_expense_id,)).fetchone()
+        row = conn.execute("SELECT id FROM expenses WHERE id = %s", (seed_expense_id,)).fetchone()
         conn.close()
         assert row is None
 
@@ -68,7 +68,7 @@ class TestDeleteExpenseUnit:
         assert result is False
 
         conn = get_db()
-        row = conn.execute("SELECT id FROM expenses WHERE id = ?", (seed_expense_id,)).fetchone()
+        row = conn.execute("SELECT id FROM expenses WHERE id = %s", (seed_expense_id,)).fetchone()
         conn.close()
         assert row is not None
 
@@ -97,7 +97,7 @@ class TestDeleteExpenseRoute:
         assert "/profile" in response.location
 
         conn = get_db()
-        row = conn.execute("SELECT id FROM expenses WHERE id = ?", (seed_expense_id,)).fetchone()
+        row = conn.execute("SELECT id FROM expenses WHERE id = %s", (seed_expense_id,)).fetchone()
         conn.close()
         assert row is None
 
@@ -106,15 +106,15 @@ class TestDeleteExpenseRoute:
         conn = get_db()
         try:
             cursor = conn.execute(
-                "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+                "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s) RETURNING id",
                 ("Other User", f"other_user_{time.time_ns()}@test.com", "hash")
             )
-            other_user_id = cursor.lastrowid
+            other_user_id = cursor.fetchone()["id"]
             cursor = conn.execute(
-                "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (other_user_id, 20.0, "Transport", "2026-02-01", "Other expense")
             )
-            other_expense_id = cursor.lastrowid
+            other_expense_id = cursor.fetchone()["id"]
             conn.commit()
         finally:
             conn.close()

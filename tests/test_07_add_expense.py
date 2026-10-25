@@ -24,7 +24,7 @@ def seed_user_id(app):
     """Get the demo user ID from seed data."""
     from database.db import get_db
     conn = get_db()
-    user = conn.execute("SELECT id FROM users WHERE email = ?", ("demo@spendly.com",)).fetchone()
+    user = conn.execute("SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)).fetchone()
     conn.close()
     return user["id"] if user else None
 
@@ -58,7 +58,7 @@ class TestInsertExpense:
         assert expense_id is not None
 
         conn = get_db()
-        row = conn.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,)).fetchone()
+        row = conn.execute("SELECT * FROM expenses WHERE id = %s", (expense_id,)).fetchone()
         conn.close()
 
         assert row is not None
@@ -84,7 +84,7 @@ class TestInsertExpense:
         assert expense_id is not None
 
         conn = get_db()
-        row = conn.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,)).fetchone()
+        row = conn.execute("SELECT * FROM expenses WHERE id = %s", (expense_id,)).fetchone()
         conn.close()
 
         assert row is not None
@@ -203,7 +203,7 @@ class TestPostAddExpenseValidData:
         from database.db import get_db
 
         before_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -215,7 +215,7 @@ class TestPostAddExpenseValidData:
         })
 
         after_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -234,7 +234,7 @@ class TestPostAddExpenseValidData:
 
         conn = get_db()
         row = conn.execute(
-            "SELECT * FROM expenses WHERE user_id = ? AND amount = ? AND category = ?",
+            "SELECT * FROM expenses WHERE user_id = %s AND amount = %s AND category = %s",
             (seed_user_id, 75.25, "Transport")
         ).fetchone()
         conn.close()
@@ -284,7 +284,7 @@ class TestPostAddExpenseNoDescription:
 
         conn = get_db()
         row = conn.execute(
-            "SELECT * FROM expenses WHERE user_id = ? AND amount = ? ORDER BY id DESC LIMIT 1",
+            "SELECT * FROM expenses WHERE user_id = %s AND amount = %s ORDER BY id DESC LIMIT 1",
             (seed_user_id, 20.0)
         ).fetchone()
         conn.close()
@@ -305,7 +305,7 @@ class TestPostAddExpenseNoDescription:
 
         conn = get_db()
         row = conn.execute(
-            "SELECT * FROM expenses WHERE user_id = ? AND amount = ? ORDER BY id DESC LIMIT 1",
+            "SELECT * FROM expenses WHERE user_id = %s AND amount = %s ORDER BY id DESC LIMIT 1",
             (seed_user_id, 15.0)
         ).fetchone()
         conn.close()
@@ -358,7 +358,7 @@ class TestPostAddExpenseMissingAmount:
         from database.db import get_db
 
         before_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -370,7 +370,7 @@ class TestPostAddExpenseMissingAmount:
         })
 
         after_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -408,7 +408,7 @@ class TestPostAddExpenseZeroAmount:
         from database.db import get_db
 
         before_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -420,7 +420,7 @@ class TestPostAddExpenseZeroAmount:
         })
 
         after_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -458,7 +458,7 @@ class TestPostAddExpenseNonNumericAmount:
         from database.db import get_db
 
         before_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -470,7 +470,7 @@ class TestPostAddExpenseNonNumericAmount:
         })
 
         after_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -508,7 +508,7 @@ class TestPostAddExpenseInvalidCategory:
         from database.db import get_db
 
         before_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -520,7 +520,7 @@ class TestPostAddExpenseInvalidCategory:
         })
 
         after_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -568,7 +568,7 @@ class TestPostAddExpenseInvalidDate:
         from database.db import get_db
 
         before_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 
@@ -580,7 +580,7 @@ class TestPostAddExpenseInvalidDate:
         })
 
         after_count = get_db().execute(
-            "SELECT COUNT(*) as count FROM expenses WHERE user_id = ?",
+            "SELECT COUNT(*) as count FROM expenses WHERE user_id = %s",
             (seed_user_id,)
         ).fetchone()["count"]
 

@@ -1,16 +1,14 @@
-import sqlite3
 import os
+import psycopg
+from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'expense_tracker.db')
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql:///spendly")
 
 
 def get_db():
-    """Returns a SQLite connection with row_factory and foreign keys enabled."""
-    conn = sqlite3.connect(DB_PATH, timeout=10)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    """Returns a PostgreSQL connection with dict rows (row['col'] access)."""
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 
 def init_db():
@@ -19,46 +17,46 @@ def init_db():
     try:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT,
                 google_id TEXT UNIQUE,
-                email_verified INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT DEFAULT (datetime('now'))
+                email_verified SMALLINT NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT (now()::text)
             )
         ''')
         conn.execute('''
             CREATE TABLE IF NOT EXISTS expenses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL,
-                amount REAL NOT NULL,
+                amount DOUBLE PRECISION NOT NULL,
                 category TEXT NOT NULL,
                 date TEXT NOT NULL,
                 description TEXT,
-                created_at TEXT DEFAULT (datetime('now')),
+                created_at TEXT NOT NULL DEFAULT (now()::text),
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ''')
         conn.execute('''
             CREATE TABLE IF NOT EXISTS contact_messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
                 email TEXT NOT NULL,
                 subject TEXT NOT NULL,
                 message TEXT NOT NULL,
-                created_at TEXT DEFAULT (datetime('now'))
+                created_at TEXT NOT NULL DEFAULT (now()::text)
             )
         ''')
         conn.execute('''
             CREATE TABLE IF NOT EXISTS auth_tokens (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 token_hash TEXT NOT NULL,
                 purpose TEXT NOT NULL,
                 expires_at TEXT NOT NULL,
                 used_at TEXT,
-                created_at TEXT DEFAULT (datetime('now')),
+                created_at TEXT NOT NULL DEFAULT (now()::text),
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ''')
@@ -73,27 +71,27 @@ def init_db():
 
 def _run_migrations(conn):
     """Idempotent migrations for databases created before this schema."""
-    columns = {row['name'] for row in conn.execute('PRAGMA table_info(users)')}
-    if 'email_verified' not in columns:
-        conn.execute(
-            'ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'
-        )
+    conn.execute(
+        'ALTER TABLE users ADD COLUMN IF NOT EXISTS '
+        'email_verified SMALLINT NOT NULL DEFAULT 0'
+    )
 
 
 def seed_db():
     """Inserts sample data for development if not already present."""
     conn = get_db()
     try:
-        existing = conn.execute('SELECT COUNT(*) as count FROM users').fetchone()
+        existing = conn.execute('SELECT COUNT(*) AS count FROM users').fetchone()
         if existing['count'] > 0:
             return
 
         password_hash = generate_password_hash('demo123')
-        cursor = conn.execute(
-            'INSERT INTO users (name, email, password_hash, email_verified) VALUES (?, ?, ?, 1)',
+        row = conn.execute(
+            'INSERT INTO users (name, email, password_hash, email_verified) '
+            'VALUES (%s, %s, %s, 1) RETURNING id',
             ('Demo User', 'demo@spendly.com', password_hash)
-        )
-        user_id = cursor.lastrowid
+        ).fetchone()
+        user_id = row['id']
 
         expenses = [
             (user_id, 45.50, 'Food', '2026-05-02', 'Lunch with friends'),
@@ -106,10 +104,12 @@ def seed_db():
             (user_id, 10.00, 'Other', '2026-05-13', 'Miscellaneous'),
         ]
 
-        conn.executemany(
-            'INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)',
-            expenses
-        )
+        with conn.cursor() as cur:
+            cur.executemany(
+                'INSERT INTO expenses (user_id, amount, category, date, description) '
+                'VALUES (%s, %s, %s, %s, %s)',
+                expenses
+            )
         conn.commit()
     finally:
         conn.close()
