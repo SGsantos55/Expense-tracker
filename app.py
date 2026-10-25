@@ -7,7 +7,7 @@ import hashlib
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user, get_user_by_email_for_auth, set_email_verified, update_password_hash, create_auth_token, get_valid_auth_token, mark_token_used
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user, get_user_by_email_for_auth, set_email_verified, update_password_hash, create_auth_token, get_valid_auth_token, mark_token_used, delete_user
 from database.excel import build_expense_workbook
 from database.mailer import send_verification_email, send_password_reset_email
 
@@ -660,6 +660,20 @@ def delete_expense(id):
         flash("An error occurred while deleting the expense.")
 
     return redirect(url_for("profile"))
+
+
+@app.route("/profile/delete", methods=["POST"])
+def delete_account():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if delete_user(g.user_id):
+        session.clear()
+        flash("Your account has been permanently deleted.")
+    else:
+        flash("An error occurred while trying to delete your account.")
+
+    return redirect(url_for("landing"))
 
 
 @app.route("/expenses/export")

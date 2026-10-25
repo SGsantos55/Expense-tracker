@@ -114,4 +114,4 @@ File: `tests/test_delete_expense.py`
 - [ ] Clicking "Delete" on a transaction row and confirming removes that expense from the database
 - [ ] After deletion, the user is redirected to `/profile` and the deleted expense no longer appears in the transaction list
 - [ ] Cancelling the browser `confirm()` dialog does not submit the form and leaves the expense intact
-- [ ] Each transaction row in the profile table now shows both "Edit" and "Delete" actions
+- [ ] Each transaction row in the profile table now shows both "Edit" and "Delete" actio
