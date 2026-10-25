@@ -137,7 +137,7 @@
 
     <div class="form-group">
       <label for="category">Category</label>
-      <select id="category" name="category" required>
+      <select id="category" name="category" required onchange="toggleCustomCategory(this)">
         <option value="">Select a category</option>
         <option value="Food" {% if request.form.category == 'Food' %}selected{% endif %}>Food</option>
         <option value="Transport" {% if request.form.category == 'Transport' %}selected{% endif %}>Transport</option>
@@ -147,6 +147,13 @@
         <option value="Shopping" {% if request.form.category == 'Shopping' %}selected{% endif %}>Shopping</option>
         <option value="Other" {% if request.form.category == 'Other' %}selected{% endif %}>Other</option>
       </select>
+      <input
+        type="text"
+        id="custom_category"
+        name="custom_category"
+        placeholder="Enter your category"
+        style="display: none; margin-top: 0.5rem;"
+      >
     </div>
 
     <div class="form-group">
@@ -179,7 +186,6 @@
 </div>
 
 <script>
-  // Set today's date in YYYY-MM-DD format for the date input
   document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('date');
@@ -187,5 +193,16 @@
       dateInput.value = today;
     }
   });
+
+  function toggleCustomCategory(select) {
+    const customInput = document.getElementById('custom_category');
+    if (select.value === 'Other') {
+      customInput.style.display = 'block';
+      customInput.setAttribute('required', 'required');
+    } else {
+      customInput.style.display = 'none';
+      customInput.removeAttribute('required');
+    }
+  }
 </script>
 {% endblock %}
