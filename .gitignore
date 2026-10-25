@@ -7,3 +7,4 @@ __pycache__/
 .DS_Store
 .claude/plans/
 file.mdfile.md
+OAUTH_IMPLEMENTATION.md
