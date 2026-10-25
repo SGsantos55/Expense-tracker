@@ -8,3 +8,4 @@ __pycache__/
 .claude/plans/
 file.mdfile.md
 OAUTH_IMPLEMENTATION.md
+SMTP_IMPLEMENTATION.md
