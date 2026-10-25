@@ -47,7 +47,7 @@ def seed_user_id(app):
     from database.db import get_db
     conn = get_db()
     user = conn.execute(
-        "SELECT id FROM users WHERE email = ?", ("demo@spendly.com",)
+        "SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)
     ).fetchone()
     conn.close()
     return user["id"] if user else None
@@ -68,15 +68,15 @@ def other_user_id(app):
     conn = get_db()
     email = f"other{int(time.time() * 1000)}@test.com"
     conn.execute(
-        "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+        "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
         ("Other User", email, "dummyhash"),
     )
     conn.commit()
-    uid = conn.execute("SELECT last_insert_rowid() AS id").fetchone()["id"]
+    uid = conn.execute("SELECT lastval() AS id").fetchone()["id"]
     # A uniquely-named expense that must never leak into another user's export.
     conn.execute(
         "INSERT INTO expenses (user_id, amount, category, date, description) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "VALUES (%s, %s, %s, %s, %s)",
         (uid, 999.99, "Shopping", "2026-05-20", "OTHER_USER_SECRET_EXPENSE"),
     )
     conn.commit()

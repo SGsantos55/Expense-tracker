@@ -19,7 +19,7 @@ def client(app):
 def seed_user_id(app):
     from database.db import get_db
     conn = get_db()
-    user = conn.execute("SELECT id FROM users WHERE email = ?", ("demo@spendly.com",)).fetchone()
+    user = conn.execute("SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)).fetchone()
     conn.close()
     return user["id"] if user else None
 
@@ -66,11 +66,11 @@ class TestGetSummaryStats:
         conn = get_db()
         email = f"noexpenses{int(time.time())}@test.com"
         conn.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
             ("No Expenses User", email, "dummyhash")
         )
         conn.commit()
-        new_user_id = conn.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
+        new_user_id = conn.execute("SELECT lastval() as id").fetchone()["id"]
         conn.close()
 
         stats = get_summary_stats(new_user_id)
@@ -96,11 +96,11 @@ class TestGetRecentTransactions:
         conn = get_db()
         email = f"empty{int(time.time())}@test.com"
         conn.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
             ("Empty User", email, "dummyhash")
         )
         conn.commit()
-        new_user_id = conn.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
+        new_user_id = conn.execute("SELECT lastval() as id").fetchone()["id"]
         conn.close()
 
         transactions = get_recent_transactions(new_user_id)
@@ -126,11 +126,11 @@ class TestGetCategoryBreakdown:
         conn = get_db()
         email = f"emptycat{int(time.time())}@test.com"
         conn.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
             ("Empty Cat User", email, "dummyhash")
         )
         conn.commit()
-        new_user_id = conn.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
+        new_user_id = conn.execute("SELECT lastval() as id").fetchone()["id"]
         conn.close()
 
         categories = get_category_breakdown(new_user_id)

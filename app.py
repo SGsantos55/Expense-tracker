@@ -236,7 +236,7 @@ def register():
             errors.append("Password must be at least 6 characters")
 
         conn = get_db()
-        existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        existing = conn.execute("SELECT id FROM users WHERE email = %s", (email,)).fetchone()
         if existing:
             errors.append("Email already registered")
 
@@ -245,14 +245,11 @@ def register():
             return render_template("register.html", errors=errors, name=name, email=email)
 
         password_hash = generate_password_hash(password)
-        conn.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-            (name, email, password_hash)
-        )
-        conn.commit()
         new_user = conn.execute(
-            "SELECT id FROM users WHERE email = ?", (email,)
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s) RETURNING id",
+            (name, email, password_hash)
         ).fetchone()
+        conn.commit()
         conn.close()
 
         sent = _send_verification(new_user["id"], email)
@@ -285,7 +282,7 @@ def login():
 
         conn = get_db()
         user = conn.execute(
-            "SELECT id, password_hash, email_verified FROM users WHERE email = ?", (email,)
+            "SELECT id, password_hash, email_verified FROM users WHERE email = %s", (email,)
         ).fetchone()
         conn.close()
 
@@ -506,6 +503,9 @@ def profile():
         return redirect(url_for("login"))
 
     user = get_user_by_id(g.user_id)
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
 
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")

@@ -58,12 +58,12 @@ def send_email(to, subject, html_body, text_body=None):
 def send_verification_email(to, link):
     """Render and send the account-verification email."""
     html = render_template("emails/verify_email.html", link=link)
-    text = f"Welcome to Spendly! Verify your email by visiting: {link}"
-    send_email(to, "Verify your Spendly account", html, text_body=text)
+    text = f"Welcome to ExpenseTracker! Verify your email by visiting: {link}"
+    send_email(to, "Verify your ExpenseTracker account", html, text_body=text)
 
 
 def send_password_reset_email(to, link):
     """Render and send the password-reset email."""
     html = render_template("emails/reset_password.html", link=link)
-    text = f"Reset your Spendly password by visiting: {link}"
-    send_email(to, "Reset your Spendly password", html, text_body=text)
+    text = f"Reset your ExpenseTracker password by visiting: {link}"
+    send_email(to, "Reset your ExpenseTracker password", html, text_body=text)

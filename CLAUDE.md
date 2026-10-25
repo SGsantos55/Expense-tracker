@@ -28,7 +28,7 @@ The app runs on port 5001 with debug mode enabled (`app.run(debug=True, port=500
 
 ### Technology Stack
 - **Framework**: Flask 3.1.3
-- **Database**: SQLite (file: `expense_tracker.db`)
+- **Database**: PostgreSQL (via psycopg 3); connection string in `DATABASE_URL`
 - **Testing**: pytest with pytest-flask
 - **Templating**: Jinja2 (built into Flask)
 
@@ -69,17 +69,24 @@ expense-tracker/
 
 ### Database Module (database/db.py)
 
-This module needs to be implemented with:
-- `get_db()` - Returns SQLite connection with row_factory and foreign keys enabled
+This module connects to **PostgreSQL** using **psycopg 3**:
+- `get_db()` - Returns a psycopg connection with `dict_row` row factory
+  (so rows support `row['column']` access), using the `DATABASE_URL`
+  environment variable (defaults to `postgresql:///spendly`)
 - `init_db()` - Creates tables with CREATE TABLE IF NOT EXISTS
-- `seed_db()` - Inserts sample development data
+- `seed_db()` - Inserts sample development data (no-op if users exist)
+
+Configuration: set `DATABASE_URL` in `.env` (see `.env.example`). Local
+development uses the Unix socket with peer auth
+(`postgresql:///spendly`). Tests run against a separate `spendly_test`
+database (see `tests/conftest.py`).
 
 ## Key Implementation Details
 
 - The base template uses DM Serif Display and DM Sans fonts from Google Fonts
 - CSS uses CSS variables for theming (e.g., `--neon-green`)
 - The brand icon is ◈ (diamond character)
-- Database file is gitignored (`expense_tracker.db`)
+- Database connection is configured via `DATABASE_URL`; the `.env` file (with real credentials) is gitignored
 
 ## Testing
 
