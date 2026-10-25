@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, flash, url_for, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 import os
+import re
 import secrets
 import hashlib
 from dotenv import load_dotenv
@@ -14,6 +15,10 @@ from database.mailer import send_verification_email, send_password_reset_email
 load_dotenv()
 
 VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+
+CUSTOM_CATEGORY_SENTINEL = "__custom__"
+CUSTOM_CATEGORY_MAX_LENGTH = 30
+CUSTOM_CATEGORY_PATTERN = re.compile(r"^[A-Za-z0-9 ]+$")
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
@@ -48,15 +53,34 @@ def load_user():
     g.user_id = session.get("user_id")
 
 
+@app.context_processor
+def inject_categories():
+    """Make preset categories and the custom sentinel available to all templates."""
+    return {
+        "valid_categories": VALID_CATEGORIES,
+        "custom_category_sentinel": CUSTOM_CATEGORY_SENTINEL,
+        "custom_category_max_length": CUSTOM_CATEGORY_MAX_LENGTH,
+    }
+
+
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
 # ------------------------------------------------------------------ #
+
+def resolve_category(form):
+    """Return the effective category, resolving the custom-category sentinel."""
+    category = form.get("category", "").strip()
+    if category == CUSTOM_CATEGORY_SENTINEL:
+        return form.get("custom_category", "").strip()
+    return category
+
 
 def validate_expense_form(form):
     """Validate expense form data. Returns a list of error strings."""
     errors = []
     amount_str = form.get("amount", "").strip()
-    category = form.get("category", "").strip()
+    category_choice = form.get("category", "").strip()
+    custom_category = form.get("custom_category", "").strip()
     date_str = form.get("date", "").strip()
 
     if not amount_str:
@@ -69,9 +93,18 @@ def validate_expense_form(form):
         except ValueError:
             errors.append("Amount must be a valid number")
 
-    if not category:
+    if not category_choice:
         errors.append("Category is required")
-    elif category not in VALID_CATEGORIES:
+    elif category_choice == CUSTOM_CATEGORY_SENTINEL:
+        if not custom_category:
+            errors.append("Category is required")
+        elif len(custom_category) > CUSTOM_CATEGORY_MAX_LENGTH:
+            errors.append(
+                f"Category must be {CUSTOM_CATEGORY_MAX_LENGTH} characters or fewer"
+            )
+        elif not CUSTOM_CATEGORY_PATTERN.match(custom_category):
+            errors.append("Category can only contain letters, numbers and spaces")
+    elif category_choice not in VALID_CATEGORIES:
         errors.append("Please select a valid category")
 
     if not date_str:
@@ -531,7 +564,9 @@ def add_expense():
 
     if request.method == "POST":
         amount_str = request.form.get("amount", "").strip()
-        category = request.form.get("category", "").strip()
+        category_choice = request.form.get("category", "").strip()
+        custom_category = request.form.get("custom_category", "").strip()
+        category = resolve_category(request.form)
         date_str = request.form.get("date", "").strip()
         description_raw = request.form.get("description", "").strip()
         description = None if not description_raw else description_raw
@@ -543,7 +578,8 @@ def add_expense():
                 "expenses/add_expense.html",
                 errors=errors,
                 amount=amount_str,
-                category=category,
+                category=category_choice,
+                custom_category=custom_category,
                 date=date_str,
                 description=description_raw
             )
@@ -565,7 +601,8 @@ def add_expense():
                 "expenses/add_expense.html",
                 errors=["An error occurred while saving your expense. Please try again."],
                 amount=amount_str,
-                category=category,
+                category=category_choice,
+                custom_category=custom_category,
                 date=date_str,
                 description=description_raw
             )
@@ -607,6 +644,7 @@ def edit_expense(id):
             errors=errors,
             amount=request.form.get("amount", "").strip(),
             category=request.form.get("category", "").strip(),
+            custom_category=request.form.get("custom_category", "").strip(),
             date=request.form.get("date", "").strip(),
             description=request.form.get("description", "").strip(),
             expense={"id": id}  # Pass minimal expense obj for form action URL
@@ -614,7 +652,7 @@ def edit_expense(id):
 
     # Update the expense
     amount_str = request.form.get("amount", "").strip()
-    category = request.form.get("category", "").strip()
+    category = resolve_category(request.form)
     date_str = request.form.get("date", "").strip()
     description_raw = request.form.get("description", "").strip()
     description = None if not description_raw else description_raw
@@ -638,7 +676,8 @@ def edit_expense(id):
             "expenses/edit_expense.html",
             errors=["An error occurred while updating your expense. Please try again."],
             amount=amount_str,
-            category=category,
+            category=request.form.get("category", "").strip(),
+            custom_category=request.form.get("custom_category", "").strip(),
             date=date_str,
             description=description_raw,
             expense={"id": id}

@@ -99,6 +99,22 @@
     margin-bottom: 1.5rem;
   }
 
+  .error-list {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  .field-hint {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+  }
+
+  #custom-category-group[hidden] {
+    display: none;
+  }
+
   @media (max-width: 400px) {
     .form-actions { flex-direction: column; }
     .form-header h1 { font-size: 1.75rem; }
@@ -121,6 +137,16 @@
     {% endif %}
   {% endwith %}
 
+  {% if errors %}
+    <div class="error-message">
+      <ul class="error-list">
+        {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
   <form method="POST" action="{{ url_for('edit_expense', id=expense.id) }}">
     <div class="form-group">
       <label for="amount">Amount (Rs)</label>
@@ -137,17 +163,31 @@
 
     <div class="form-group">
       <label for="category">Category</label>
+      {% set submitted_cat = request.form.get('category') %}
+      {% set current_cat = submitted_cat if submitted_cat is not none else expense.category %}
+      {% set is_custom = current_cat == custom_category_sentinel or (current_cat and current_cat not in valid_categories) %}
       <select id="category" name="category" required>
         <option value="">Select a category</option>
-        {% set selected_cat = request.form.get('category') if request.form.get('category') is not none else expense.category %}
-        <option value="Food" {% if selected_cat == 'Food' %}selected{% endif %}>Food</option>
-        <option value="Transport" {% if selected_cat == 'Transport' %}selected{% endif %}>Transport</option>
-        <option value="Bills" {% if selected_cat == 'Bills' %}selected{% endif %}>Bills</option>
-        <option value="Health" {% if selected_cat == 'Health' %}selected{% endif %}>Health</option>
-        <option value="Entertainment" {% if selected_cat == 'Entertainment' %}selected{% endif %}>Entertainment</option>
-        <option value="Shopping" {% if selected_cat == 'Shopping' %}selected{% endif %}>Shopping</option>
-        <option value="Other" {% if selected_cat == 'Other' %}selected{% endif %}>Other</option>
+        {% for cat in valid_categories %}
+        <option value="{{ cat }}" {% if current_cat == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+        <option value="{{ custom_category_sentinel }}" {% if is_custom %}selected{% endif %}>+ Add custom category…</option>
       </select>
+    </div>
+
+    <div class="form-group" id="custom-category-group" hidden>
+      <label for="custom_category">Custom category</label>
+      {% set posted_custom = request.form.get('custom_category') %}
+      {% set custom_value = posted_custom if posted_custom is not none else (current_cat if is_custom and current_cat != custom_category_sentinel else '') %}
+      <input
+        type="text"
+        id="custom_category"
+        name="custom_category"
+        maxlength="{{ custom_category_max_length }}"
+        placeholder="e.g. Pet Care"
+        value="{{ custom_value }}"
+      >
+      <p class="field-hint">Letters, numbers and spaces only — max {{ custom_category_max_length }} characters.</p>
     </div>
 
     <div class="form-group">
@@ -180,13 +220,23 @@
 </div>
 
 <script>
-  // Ensure date field is properly formatted if needed
   document.addEventListener('DOMContentLoaded', function() {
-    const dateInput = document.getElementById('date');
-    if (dateInput.value) {
-      // Date is already in YYYY-MM-DD format from the template
-      // No additional processing needed
+    const CUSTOM_VALUE = {{ custom_category_sentinel | tojson }};
+    const select = document.getElementById('category');
+    const group = document.getElementById('custom-category-group');
+    const customInput = document.getElementById('custom_category');
+
+    function toggleCustomCategory() {
+      const isCustom = select.value === CUSTOM_VALUE;
+      group.hidden = !isCustom;
+      customInput.required = isCustom;
+      if (!isCustom) {
+        customInput.value = '';
+      }
     }
+
+    select.addEventListener('change', toggleCustomCategory);
+    toggleCustomCategory();
   });
 </script>
 {% endblock %}

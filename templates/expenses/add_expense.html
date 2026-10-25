@@ -99,6 +99,22 @@
     margin-bottom: 1.5rem;
   }
 
+  .error-list {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  .field-hint {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+  }
+
+  #custom-category-group[hidden] {
+    display: none;
+  }
+
   @media (max-width: 400px) {
     .form-actions { flex-direction: column; }
     .form-header h1 { font-size: 1.75rem; }
@@ -121,6 +137,16 @@
     {% endif %}
   {% endwith %}
 
+  {% if errors %}
+    <div class="error-message">
+      <ul class="error-list">
+        {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
   <form method="POST" action="{{ url_for('add_expense') }}">
     <div class="form-group">
       <label for="amount">Amount (Rs)</label>
@@ -137,23 +163,27 @@
 
     <div class="form-group">
       <label for="category">Category</label>
-      <select id="category" name="category" required onchange="toggleCustomCategory(this)">
+      {% set selected_cat = request.form.get('category', '') %}
+      <select id="category" name="category" required>
         <option value="">Select a category</option>
-        <option value="Food" {% if request.form.category == 'Food' %}selected{% endif %}>Food</option>
-        <option value="Transport" {% if request.form.category == 'Transport' %}selected{% endif %}>Transport</option>
-        <option value="Bills" {% if request.form.category == 'Bills' %}selected{% endif %}>Bills</option>
-        <option value="Health" {% if request.form.category == 'Health' %}selected{% endif %}>Health</option>
-        <option value="Entertainment" {% if request.form.category == 'Entertainment' %}selected{% endif %}>Entertainment</option>
-        <option value="Shopping" {% if request.form.category == 'Shopping' %}selected{% endif %}>Shopping</option>
-        <option value="Other" {% if request.form.category == 'Other' %}selected{% endif %}>Other</option>
+        {% for cat in valid_categories %}
+        <option value="{{ cat }}" {% if selected_cat == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+        <option value="{{ custom_category_sentinel }}" {% if selected_cat == custom_category_sentinel %}selected{% endif %}>+ Add custom category…</option>
       </select>
+    </div>
+
+    <div class="form-group" id="custom-category-group" hidden>
+      <label for="custom_category">Custom category</label>
       <input
         type="text"
         id="custom_category"
         name="custom_category"
-        placeholder="Enter your category"
-        style="display: none; margin-top: 0.5rem;"
+        maxlength="{{ custom_category_max_length }}"
+        placeholder="e.g. Pet Care"
+        value="{{ request.form.get('custom_category', '') }}"
       >
+      <p class="field-hint">Letters, numbers and spaces only — max {{ custom_category_max_length }} characters.</p>
     </div>
 
     <div class="form-group">
@@ -192,17 +222,23 @@
     if (!dateInput.value) {
       dateInput.value = today;
     }
-  });
 
-  function toggleCustomCategory(select) {
+    const CUSTOM_VALUE = {{ custom_category_sentinel | tojson }};
+    const select = document.getElementById('category');
+    const group = document.getElementById('custom-category-group');
     const customInput = document.getElementById('custom_category');
-    if (select.value === 'Other') {
-      customInput.style.display = 'block';
-      customInput.setAttribute('required', 'required');
-    } else {
-      customInput.style.display = 'none';
-      customInput.removeAttribute('required');
+
+    function toggleCustomCategory() {
+      const isCustom = select.value === CUSTOM_VALUE;
+      group.hidden = !isCustom;
+      customInput.required = isCustom;
+      if (!isCustom) {
+        customInput.value = '';
+      }
     }
-  }
+
+    select.addEventListener('change', toggleCustomCategory);
+    toggleCustomCategory();
+  });
 </script>
 {% endblock %}
