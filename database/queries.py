@@ -3,6 +3,20 @@ from datetime import datetime
 from database.db import get_db
 
 
+def delete_user(user_id):
+    """Permanently delete a user and all their associated data."""
+    conn = get_db()
+    try:
+        # Delete dependent data first to avoid foreign key violations
+        conn.execute("DELETE FROM auth_tokens WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM expenses WHERE user_id = ?", (user_id,))
+        # Finally delete the user
+        cursor = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
 def get_user_by_id(user_id):
     """Return user info dict or None if not found."""
     conn = get_db()

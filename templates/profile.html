@@ -167,5 +167,21 @@
         </div>
         {% endif %}
     </div>
+    </div>
 </section>
+    {# Danger Zone #}
+    <div class="profile-section">
+        <div class="danger-zone">
+            <div class="profile-section-header">
+                <h2 class="profile-section-title">
+                    <i data-lucide="trash-2"></i>
+                    Danger Zone
+                </h2>
+            </div>
+            <p class="danger-text">Once you delete your account, there is no going back. Please be certain. All your expenses and personal data will be permanently removed from our systems.</p>
+            <form method="POST" action="{{ url_for('delete_account') }}" onsubmit="return confirm('Are you absolutely sure you want to permanently delete your account? This action cannot be undone.');">
+                <button type="submit" class="btn-danger">Delete My Account</button>
+            </form>
+        </div>
+    </div>
 {% endblock %}

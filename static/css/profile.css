@@ -224,6 +224,7 @@
     color: white;
     border-color: var(--neon-green);
 }
+
 /* ------------------------------------------------------------------ */
 /* Responsive expenses table -> stacked cards on small screens        */
 /* ------------------------------------------------------------------ */
@@ -294,4 +295,74 @@
     .expense-actions-cell::before {
         width: 100%;
     }
+}
+
+/* Action buttons in expenses table */
+.btn-edit, .btn-delete {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    margin-right: 0.5rem;
+    font-family: var(--font-body);
+    display: inline-block;
+}
+
+.btn-edit {
+    background: var(--accent-light);
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.btn-edit:hover {
+    background: var(--accent);
+    color: var(--paper);
+}
+
+.btn-delete {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    color: var(--paper);
+}
+
+/* ------------------------------------------------------------------ */
+/* Danger Zone Styles                                                     */
+/* ------------------------------------------------------------------ */
+
+.danger-zone {
+    background: var(--danger-light);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.danger-text {
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: var(--paper);
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: var(--ink);
 }
