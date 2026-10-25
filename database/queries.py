@@ -79,6 +79,94 @@ def create_oauth_user(name, email, google_id):
         conn.close()
 
 
+# ------------------------------------------------------------------ #
+# Email verification & password reset                                 #
+# ------------------------------------------------------------------ #
+
+def get_user_by_email_for_auth(email):
+    """Return auth-relevant fields for an email, or None.
+
+    Fields: id, name, email, password_hash, email_verified, google_id.
+    """
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT id, name, email, password_hash, email_verified, google_id "
+            "FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def set_email_verified(user_id):
+    """Mark a user's email address as verified."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET email_verified = 1 WHERE id = ?",
+            (user_id,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def update_password_hash(user_id, password_hash):
+    """Set a new password hash for a user."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (password_hash, user_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def create_auth_token(user_id, token_hash, purpose, expires_at):
+    """Store a single-use auth token hash and return the new row id."""
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at) "
+            "VALUES (?, ?, ?, ?)",
+            (user_id, token_hash, purpose, expires_at)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_valid_auth_token(token_hash, purpose):
+    """Return an unused, unexpired token row matching hash + purpose, or None."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT id, user_id, purpose, expires_at, used_at FROM auth_tokens "
+            "WHERE token_hash = ? AND purpose = ? AND used_at IS NULL "
+            "AND expires_at > datetime('now')",
+            (token_hash, purpose)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def mark_token_used(token_id):
+    """Mark an auth token as consumed so it cannot be reused."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE auth_tokens SET used_at = datetime('now') WHERE id = ?",
+            (token_id,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def get_summary_stats(user_id, date_from=None, date_to=None):
     """Return dict with total_spent, transaction_count, top_category."""
     conn = get_db()

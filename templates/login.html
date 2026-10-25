@@ -14,8 +14,21 @@
         </div>
 
         <div class="auth-card">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="auth-success">{{ messages[0] }}</div>
+            {% endif %}
+            {% endwith %}
+
             {% if error %}
             <div class="auth-error">{{ error }}</div>
+            {% endif %}
+
+            {% if unverified_email %}
+            <form method="POST" action="{{ url_for('verify_resend') }}" class="resend-verify">
+                <input type="hidden" name="email" value="{{ unverified_email }}">
+                <button type="submit" class="btn-link">Resend verification email</button>
+            </form>
             {% endif %}
 
             <form method="POST" action="/login">
@@ -31,6 +44,9 @@
                     <input type="password" id="password" name="password"
                            class="form-input" placeholder="Your password"
                            required>
+                </div>
+                <div class="form-meta">
+                    <a href="{{ url_for('forgot_password') }}" class="form-link">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn-submit">Sign in</button>
             </form>

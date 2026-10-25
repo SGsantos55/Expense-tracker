@@ -2,11 +2,14 @@ from flask import Flask, render_template, request, redirect, flash, url_for, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date as date_obj, timedelta
 import os
+import secrets
+import hashlib
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user, get_user_by_email_for_auth, set_email_verified, update_password_hash, create_auth_token, get_valid_auth_token, mark_token_used
 from database.excel import build_expense_workbook
+from database.mailer import send_verification_email, send_password_reset_email
 
 load_dotenv()
 
@@ -80,6 +83,51 @@ def validate_expense_form(form):
             errors.append("Date must be in YYYY-MM-DD format")
 
     return errors
+
+
+# ------------------------------------------------------------------ #
+# Email-token helpers (verification & password reset)                 #
+# ------------------------------------------------------------------ #
+
+VERIFY_TOKEN_TTL = timedelta(hours=24)
+RESET_TOKEN_TTL = timedelta(hours=1)
+
+
+def _hash_token(raw_token):
+    """Return the sha256 hex digest stored in the database for a raw token."""
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+def _issue_token(user_id, purpose, ttl):
+    """Create a single-use token row and return the raw (un-hashed) token."""
+    raw_token = secrets.token_urlsafe(32)
+    expires_at = (datetime.utcnow() + ttl).strftime("%Y-%m-%d %H:%M:%S")
+    create_auth_token(user_id, _hash_token(raw_token), purpose, expires_at)
+    return raw_token
+
+
+def _send_verification(user_id, email):
+    """Issue a verification token and email the link. Returns True on success."""
+    raw_token = _issue_token(user_id, "verify_email", VERIFY_TOKEN_TTL)
+    link = url_for("verify_email", token=raw_token, _external=True)
+    try:
+        send_verification_email(email, link)
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send verification email: {e}")
+        return False
+
+
+def _send_password_reset(user_id, email):
+    """Issue a reset token and email the link. Returns True on success."""
+    raw_token = _issue_token(user_id, "password_reset", RESET_TOKEN_TTL)
+    link = url_for("reset_password", token=raw_token, _external=True)
+    try:
+        send_password_reset_email(email, link)
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send password reset email: {e}")
+        return False
 
 
 # ------------------------------------------------------------------ #
@@ -169,9 +217,16 @@ def register():
             (name, email, password_hash)
         )
         conn.commit()
+        new_user = conn.execute(
+            "SELECT id FROM users WHERE email = ?", (email,)
+        ).fetchone()
         conn.close()
 
-        flash("Registration successful! Please log in.")
+        sent = _send_verification(new_user["id"], email)
+        if sent:
+            flash("Registration successful! Check your email to verify your account before signing in.")
+        else:
+            flash("Registration successful, but we couldn't send your verification email. You can request a new one from the sign-in page.")
         return redirect(url_for("login"))
 
     return render_template("register.html")
@@ -197,11 +252,18 @@ def login():
 
         conn = get_db()
         user = conn.execute(
-            "SELECT id, password_hash FROM users WHERE email = ?", (email,)
+            "SELECT id, password_hash, email_verified FROM users WHERE email = ?", (email,)
         ).fetchone()
         conn.close()
 
         if user and user["password_hash"] and check_password_hash(user["password_hash"], password):
+            if not user["email_verified"]:
+                return render_template(
+                    "login.html",
+                    error="Please verify your email before signing in.",
+                    unverified_email=email,
+                    email=email,
+                )
             session["user_id"] = user["id"]
             return redirect(url_for("profile"))
 
@@ -256,6 +318,80 @@ def login_google_callback():
 
     session["user_id"] = user_id
     return redirect(url_for("profile"))
+
+
+# ------------------------------------------------------------------ #
+# Email verification                                                   #
+# ------------------------------------------------------------------ #
+
+@app.route("/verify/<token>")
+def verify_email(token):
+    record = get_valid_auth_token(_hash_token(token), "verify_email")
+    if not record:
+        flash("This verification link is invalid or has expired.")
+        return redirect(url_for("login"))
+
+    set_email_verified(record["user_id"])
+    mark_token_used(record["id"])
+    flash("Your email has been verified. You can now sign in.")
+    return redirect(url_for("login"))
+
+
+@app.route("/verify/resend", methods=["POST"])
+def verify_resend():
+    email = request.form.get("email", "").strip().lower()
+    user = get_user_by_email_for_auth(email) if email else None
+    # Only (re)send to real, password-based, still-unverified accounts.
+    if user and user["password_hash"] and not user["email_verified"]:
+        _send_verification(user["id"], user["email"])
+    flash("If that account exists and needs verifying, we've sent a new verification email.")
+    return redirect(url_for("login"))
+
+
+# ------------------------------------------------------------------ #
+# Password reset                                                       #
+# ------------------------------------------------------------------ #
+
+@app.route("/password/forgot", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        user = get_user_by_email_for_auth(email) if email else None
+        # Never reset OAuth-only accounts (no password); stay enumeration-safe.
+        if user and user["password_hash"]:
+            _send_password_reset(user["id"], user["email"])
+        flash("If an account with that email exists, we've sent a password reset link.")
+        return redirect(url_for("login"))
+
+    return render_template("auth/forgot_password.html")
+
+
+@app.route("/password/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    record = get_valid_auth_token(_hash_token(token), "password_reset")
+    if not record:
+        flash("This password reset link is invalid or has expired.")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+
+        errors = []
+        if not password or len(password) < 6:
+            errors.append("Password must be at least 6 characters")
+        if password != confirm:
+            errors.append("Passwords do not match")
+
+        if errors:
+            return render_template("auth/reset_password.html", errors=errors, token=token)
+
+        update_password_hash(record["user_id"], generate_password_hash(password))
+        mark_token_used(record["id"])
+        flash("Your password has been reset. Please sign in with your new password.")
+        return redirect(url_for("login"))
+
+    return render_template("auth/reset_password.html", token=token)
 
 
 @app.route("/terms")
