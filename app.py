@@ -23,7 +23,7 @@ CUSTOM_CATEGORY_PATTERN = re.compile(r"^[A-Za-z0-9 ]+$")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
 app = Flask(__name__)
-app.secret_key = "spendly-dev-secret-key-change-in-production"
+app.secret_key = os.environ.get("SECRET_KEY", "spendly-dev-secret-key-change-in-production")
 
 # ------------------------------------------------------------------ #
 # OAuth (Google) configuration                                        #
