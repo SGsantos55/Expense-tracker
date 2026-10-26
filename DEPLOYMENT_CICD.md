@@ -218,3 +218,49 @@ A: In the Render Dashboard for the `spendly` service, open the "Logs" and
 A: Render keeps the previous healthy version running until the new one
 passes its health check, and you can one-click "Rollback" to an earlier
 deploy in the Dashboard.
+
+**Q: Is nginx used here?**
+A: **No.** See Section 7 below for the full explanation.
+
+---
+
+## 7. Why there is no nginx (and why that's fine)
+
+On a traditional server you often put **nginx** in front of your app to
+handle HTTPS, routing, and serving static files. On Render you do **not**
+need nginx, because Render's own platform layer already does those jobs for
+you. Your app is served directly by **gunicorn**.
+
+```
+Internet  ──HTTPS──▶  Render edge/router  ──▶  gunicorn  ──▶  Flask (app.py)
+                     (TLS, load balancing)      (WSGI server)
+```
+
+**Who does each job nginx would normally do:**
+
+| Job nginx usually does | Who does it on Render |
+|------------------------|------------------------|
+| HTTPS / TLS certificates | Render's edge (automatic free certificates) |
+| Routing the domain to your app | Render's load balancer/router |
+| Forwarding traffic to the right port (`$PORT`) | Render |
+| Serving files in `static/` | Flask serves them directly via its `/static/` route |
+
+**What actually serves the app** is just this one command from `render.yaml`:
+
+```
+gunicorn app:app --bind 0.0.0.0:$PORT
+```
+
+Gunicorn is a production-grade WSGI server that runs the Flask code. Render
+routes public HTTPS traffic straight to gunicorn, so adding nginx would be
+redundant.
+
+**When you *would* add nginx:**
+
+- Self-hosting on a bare virtual machine (e.g. an AWS EC2 instance or a
+  DigitalOcean droplet) where nothing else provides TLS and routing.
+- Serving very large volumes of static assets as efficiently as possible.
+- Advanced reverse-proxy features like custom rate-limiting or caching.
+
+For this Render-hosted Flask app, the pattern **Render edge → gunicorn →
+Flask** is the standard, recommended setup — no nginx required.
