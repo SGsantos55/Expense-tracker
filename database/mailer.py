@@ -1,13 +1,22 @@
-"""Framework-light SMTP email sender using the Python standard library.
+"""Framework-light email sender.
 
-Reads configuration from environment variables (loaded via python-dotenv in
-app.py):
+Two delivery backends are supported, selected automatically:
 
-    MAIL_SERVER    SMTP host
-    MAIL_PORT      SMTP port (default 587)
-    MAIL_USE_TLS   "true"/"1"/"yes" to enable STARTTLS
-    MAIL_USERNAME  SMTP username; also the default From address
-    MAIL_PASSWORD  SMTP password
+1. **Resend HTTP API** (used when ``RESEND_API_KEY`` is set). Sends over
+   HTTPS (port 443), which works on hosts that block outbound SMTP ports
+   such as Render's free tier. Configure:
+
+       RESEND_API_KEY  Resend API key (required to enable this backend)
+       MAIL_FROM       Verified sender address, e.g. "Spendly <no-reply@yourdomain.com>"
+                       (Resend's shared "onboarding@resend.dev" works for testing)
+
+2. **SMTP** (fallback, used when ``RESEND_API_KEY`` is not set). Reads:
+
+       MAIL_SERVER    SMTP host
+       MAIL_PORT      SMTP port (default 587)
+       MAIL_USE_TLS   "true"/"1"/"yes" to enable STARTTLS
+       MAIL_USERNAME  SMTP username; also the default From address
+       MAIL_PASSWORD  SMTP password
 
 Credentials are never hardcoded.
 """
@@ -16,7 +25,10 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
+import requests
 from flask import render_template
+
+RESEND_API_URL = "https://api.resend.com/emails"
 
 
 def _truthy(value):
@@ -24,10 +36,46 @@ def _truthy(value):
 
 
 def send_email(to, subject, html_body, text_body=None):
-    """Send an HTML email via SMTP. Raises on failure.
+    """Send an HTML email. Raises on failure.
 
-    The caller is responsible for catching/logging errors.
+    Uses the Resend HTTP API when ``RESEND_API_KEY`` is configured (works on
+    hosts that block SMTP ports); otherwise falls back to SMTP. The caller is
+    responsible for catching/logging errors.
     """
+    if os.environ.get("RESEND_API_KEY"):
+        _send_via_resend(to, subject, html_body, text_body)
+    else:
+        _send_via_smtp(to, subject, html_body, text_body)
+
+
+def _send_via_resend(to, subject, html_body, text_body=None):
+    """Deliver an email through the Resend HTTP API (HTTPS, port 443)."""
+    api_key = os.environ["RESEND_API_KEY"]
+    sender = os.environ.get("MAIL_FROM") or "onboarding@resend.dev"
+
+    payload = {
+        "from": sender,
+        "to": [to],
+        "subject": subject,
+        "html": html_body,
+    }
+    if text_body:
+        payload["text"] = text_body
+
+    response = requests.post(
+        RESEND_API_URL,
+        json=payload,
+        headers={"Authorization": f"Bearer {api_key}"},
+        timeout=15,
+    )
+    if response.status_code >= 400:
+        raise RuntimeError(
+            f"Resend API error {response.status_code}: {response.text}"
+        )
+
+
+def _send_via_smtp(to, subject, html_body, text_body=None):
+    """Deliver an email through an SMTP server."""
     host = os.environ.get("MAIL_SERVER")
     if not host:
         raise RuntimeError("MAIL_SERVER is not configured")
