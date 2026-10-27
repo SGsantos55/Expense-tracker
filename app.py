@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory, Response, abort
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import datetime, date as date_obj, timedelta
 import os
 import re
@@ -24,6 +25,11 @@ ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "spendly-dev-secret-key-change-in-production")
+
+# Trust Render's (or any) reverse proxy so request.scheme reflects the original
+# HTTPS request. Without this, url_for(_external=True) builds http:// URLs behind
+# the proxy, which breaks the OAuth redirect_uri match.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # ------------------------------------------------------------------ #
 # OAuth (Google) configuration                                        #
