@@ -1,7 +1,7 @@
 # Spec: SMTP for Authentication
 
 ## Overview
-This feature wires real email delivery into Spendly's authentication flows using
+This feature wires real email delivery into Expense Tracker's authentication flows using
 SMTP, so the app can prove a user controls their email address and let users
 recover a lost password. It adds (1) email verification on registration — a new
 user receives a one-time, time-limited verification link and stays unverified

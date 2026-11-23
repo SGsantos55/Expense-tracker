@@ -124,7 +124,7 @@
 
 ● Project Overview
 
-  Spendly is a personal finance tracking web application built with Flask
+  Expense Tracker is a personal finance tracking web application built with Flask
   (Python). It's designed to help users track their daily expenses, understand
   spending patterns, and manage their financial life.
 
@@ -169,7 +169,7 @@
 
 ✻ Cogitated for 9s
 
-※ recap: Spendly is a personal expense tracker app with working UI but no backend yet. I just reviewed the codebase — next step is implementing database setup and authentication logic. (disable recaps in /config)
+※ recap: Expense Tracker is a personal expense tracker app with working UI but no backend yet. I just reviewed the codebase — next step is implementing database setup and authentication logic. (disable recaps in /config)
 
 ❯ What tech stack does this project use?                                        
 
@@ -246,7 +246,7 @@
 
 ✻ Cooked for 13s
 
-※ recap: Spendly is a Flask expense tracker with landing, login, and register pages done, but the database layer and user authentication are still empty for students to implement. Next step would be implementing database setup in database/db.py to connect SQLite and create the users/expenses tables. (disable recaps in /config)
+※ recap: Expense Tracker is a Flask expense tracker with landing, login, and register pages done, but the database layer and user authentication are still empty for students to implement. Next step would be implementing database setup in database/db.py to connect SQLite and create the users/expenses tables. (disable recaps in /config)
 
 ❯ /exit                                                                         
   ⎿  Bye!

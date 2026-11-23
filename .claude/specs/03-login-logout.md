@@ -1,7 +1,7 @@
 # Spec: Login and Logout
 
 ## Overview
-Implements user authentication with login and logout functionality. Users can log in with their email and password, and log out securely. This is step 3 of the Spendly roadmap, building on the registration feature from step 2.
+Implements user authentication with login and logout functionality. Users can log in with their email and password, and log out securely. This is step 3 of the Expense Tracker roadmap, building on the registration feature from step 2.
 
 ## Depends on
 - Step 2: Registration (complete)

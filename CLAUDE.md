@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Flask-based expense tracker web application called "Spendly". It's a student project with placeholder routes for future implementation steps.
+This is a Flask-based expense tracker web application called "Expense Tracker". It's a student project with placeholder routes for future implementation steps.
 
 ## Common Commands
 

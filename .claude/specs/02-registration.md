@@ -1,7 +1,7 @@
 # Spec: Registration
 
 ## Overview
-Implements user registration functionality with email/password authentication. Users can create an account with a unique email and secure password. This is step 2 of the Spendly roadmap, building on the database foundation from step 1.
+Implements user registration functionality with email/password authentication. Users can create an account with a unique email and secure password. This is step 2 of the Expense Tracker roadmap, building on the database foundation from step 1.
 
 ## Depends on
 - Step 1: Database Setup (complete)

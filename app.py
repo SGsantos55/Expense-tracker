@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
 from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user, get_user_by_email_for_auth, set_email_verified, update_password_hash, create_auth_token, get_valid_auth_token, mark_token_used, delete_user
-from database.excel import build_expense_workbook
+from database.excel import build_expense_workbook, TEMPLATES as EXPORT_TEMPLATES, DEFAULT_TEMPLATE
+from database.pdf import build_expense_pdf
 from database.mailer import send_verification_email, send_password_reset_email
 
 load_dotenv()
@@ -24,7 +25,7 @@ CUSTOM_CATEGORY_PATTERN = re.compile(r"^[A-Za-z0-9 ]+$")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "spendly-dev-secret-key-change-in-production")
+app.secret_key = os.environ.get("SECRET_KEY", "expense-tracker-dev-secret-key-change-in-production")
 
 # Trust Render's (or any) reverse proxy so request.scheme reflects the original
 # HTTPS request. Without this, url_for(_external=True) builds http:// URLs behind
@@ -721,38 +722,61 @@ def delete_account():
     return redirect(url_for("landing"))
 
 
+def _validated_export_dates():
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+    try:
+        validated_from = datetime.strptime(date_from, "%Y-%m-%d").strftime("%Y-%m-%d") if date_from else None
+        validated_to = datetime.strptime(date_to, "%Y-%m-%d").strftime("%Y-%m-%d") if date_to else None
+    except ValueError:
+        return None, None
+    if validated_from and validated_to and validated_from > validated_to:
+        return None, None
+    return validated_from, validated_to
+
+
 @app.route("/expenses/export")
 def export_expenses():
     if not g.user_id:
         return redirect(url_for("login"))
 
-    date_from = request.args.get("date_from")
-    date_to = request.args.get("date_to")
-
-    validated_from = None
-    validated_to = None
-
-    if date_from or date_to:
-        try:
-            if date_from:
-                validated_from = datetime.strptime(date_from, "%Y-%m-%d").strftime("%Y-%m-%d")
-            if date_to:
-                validated_to = datetime.strptime(date_to, "%Y-%m-%d").strftime("%Y-%m-%d")
-        except ValueError:
-            validated_from = None
-            validated_to = None
-
-        if validated_from and validated_to and validated_from > validated_to:
-            validated_from = None
-            validated_to = None
+    validated_from, validated_to = _validated_export_dates()
+    template = request.args.get("template", DEFAULT_TEMPLATE)
+    if template not in EXPORT_TEMPLATES:
+        template = DEFAULT_TEMPLATE
 
     rows = get_expenses_for_export(g.user_id, validated_from, validated_to)
-    workbook_bytes = build_expense_workbook(rows)
+    workbook_bytes = build_expense_workbook(rows, template)
 
-    filename = f"expenses_{date_obj.today().strftime('%Y-%m-%d')}.xlsx"
+    filename = f"expenses_{template}_{date_obj.today().strftime('%Y-%m-%d')}.xlsx"
     return Response(
         workbook_bytes,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.route("/expenses/export/pdf")
+def export_expenses_pdf():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    user = get_user_by_id(g.user_id)
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    validated_from, validated_to = _validated_export_dates()
+    rows = get_expenses_for_export(g.user_id, validated_from, validated_to)
+    stats = get_summary_stats(g.user_id, validated_from, validated_to)
+    categories = get_category_breakdown(g.user_id, validated_from, validated_to)
+    pdf_bytes = build_expense_pdf(
+        rows, stats, categories, validated_from, validated_to, user["name"])
+
+    filename = f"expenses_statement_{date_obj.today().strftime('%Y-%m-%d')}.pdf"
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 

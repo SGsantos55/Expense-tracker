@@ -23,7 +23,7 @@ def seed_user_id(app):
     """Get the demo user ID from seed data."""
     from database.db import get_db
     conn = get_db()
-    user = conn.execute("SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)).fetchone()
+    user = conn.execute("SELECT id FROM users WHERE email = %s", ("plankmax05@gmail.com",)).fetchone()
     conn.close()
     return user["id"] if user else None
 

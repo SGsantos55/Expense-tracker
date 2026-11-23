@@ -4,7 +4,7 @@
 This feature lets a logged-in user download their expenses as a formatted
 Excel (`.xlsx`) workbook. It builds on the profile page and its date filter so
 users can export either their full history or a specific date range for
-offline record-keeping, sharing, or reporting. At this stage of the Spendly
+offline record-keeping, sharing, or reporting. At this stage of the Expense Tracker
 roadmap the core CRUD and filtering flows are complete, so a native
 spreadsheet export is the natural next step for giving users ownership of their
 data.

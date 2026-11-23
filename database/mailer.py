@@ -7,7 +7,7 @@ Two delivery backends are supported, selected automatically:
    such as Render's free tier. Configure:
 
        RESEND_API_KEY  Resend API key (required to enable this backend)
-       MAIL_FROM       Verified sender address, e.g. "Spendly <no-reply@yourdomain.com>"
+       MAIL_FROM       Verified sender address, e.g. "Expense Tracker <no-reply@yourdomain.com>"
                        (Resend's shared "onboarding@resend.dev" works for testing)
 
 2. **SMTP** (fallback, used when ``RESEND_API_KEY`` is not set). Reads:
@@ -84,7 +84,7 @@ def _send_via_smtp(to, subject, html_body, text_body=None):
     username = os.environ.get("MAIL_USERNAME")
     password = os.environ.get("MAIL_PASSWORD")
     use_tls = _truthy(os.environ.get("MAIL_USE_TLS", "true"))
-    sender = os.environ.get("MAIL_FROM") or username or "no-reply@spendly.local"
+    sender = os.environ.get("MAIL_FROM") or username or "no-reply@expense-tracker.local"
 
     msg = EmailMessage()
     msg["Subject"] = subject

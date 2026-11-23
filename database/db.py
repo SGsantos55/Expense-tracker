@@ -89,7 +89,7 @@ def seed_db():
         row = conn.execute(
             'INSERT INTO users (name, email, password_hash, email_verified) '
             'VALUES (%s, %s, %s, 1) RETURNING id',
-            ('Demo User', 'demo@spendly.com', password_hash)
+            ('Demo User', 'plankmax05@gmail.com', password_hash)
         ).fetchone()
         user_id = row['id']
 

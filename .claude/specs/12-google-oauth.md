@@ -1,7 +1,7 @@
 # Spec: Google OAuth Login
 
 ## Overview
-This feature lets users sign in to Spendly with their Google account instead of
+This feature lets users sign in to Expense Tracker with their Google account instead of
 (or in addition to) an email/password. It adds a "Continue with Google" button
 to the login and registration pages, runs the OAuth 2.0 Authorization Code flow
 against Google, and on success creates or matches a local user record and logs

@@ -2,13 +2,13 @@
 
 ## Overview
 Step 10 adds a public "Contact Us" page so visitors and users can send a message
-to the Spendly team without needing an account. The page lives at `/contact` and
+to the Expense Tracker team without needing an account. The page lives at `/contact` and
 is reachable from the footer (alongside Terms and Privacy). It renders a simple
 form (name, email, subject, message) that POSTs back to `/contact`. On submit the
 handler validates the input server-side, stores the submission in a new
 `contact_messages` table via a parameterised query, flashes a success message, and
 redirects back to `/contact`. On validation failure it re-renders the form with the
-error list and the previously entered values preserved. This gives Spendly a
+error list and the previously entered values preserved. This gives Expense Tracker a
 lightweight support channel and a persisted record of inbound messages, while
 following the same static-page + CSS-variable conventions already used by the
 terms and privacy pages.

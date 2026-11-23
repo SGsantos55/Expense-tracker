@@ -17,7 +17,7 @@ XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 EXPORT_URL = "/expenses/export"
 EXPECTED_HEADERS = ["Date", "Category", "Description", "Amount"]
 
-# Seed data (see database/db.py seed_db): 8 expenses for demo@spendly.com.
+# Seed data (see database/db.py seed_db): 8 expenses for plankmax05@gmail.com.
 SEED_EXPENSE_COUNT = 8
 SEED_TOTAL = 363.98  # 45.50+25+120+35+15.99+89.99+22.50+10
 
@@ -47,7 +47,7 @@ def seed_user_id(app):
     from database.db import get_db
     conn = get_db()
     user = conn.execute(
-        "SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)
+        "SELECT id FROM users WHERE email = %s", ("plankmax05@gmail.com",)
     ).fetchone()
     conn.close()
     return user["id"] if user else None

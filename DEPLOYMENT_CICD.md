@@ -1,6 +1,6 @@
-# How Spendly is Deployed: CI/CD Explained (Beginner Friendly)
+# How Expense Tracker is Deployed: CI/CD Explained (Beginner Friendly)
 
-This document explains, step by step, how the Spendly Flask app gets from
+This document explains, step by step, how the Expense Tracker Flask app gets from
 your computer to a live website on the internet — and how it automatically
 re-deploys every time you push code. It is written for someone new to
 deployment, so every term is explained.

@@ -589,7 +589,6 @@
             </p>
             <div class="hero-actions">
                 <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
-                <a href="#" class="btn-ghost" id="videoBtn">See how it works</a>
             </div>
         </div>
         
@@ -821,50 +820,5 @@
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
-
-<!-- Video Modal -->
-<div class="modal-overlay" id="videoModal">
-    <div class="modal-content">
-        <button class="modal-close" id="modalClose">&times;</button>
-        <div class="video-wrapper">
-            <iframe id="videoFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-    </div>
-</div>
-
-<script>
-    var videoBtn = document.getElementById('videoBtn');
-    var modal = document.getElementById('videoModal');
-    var modalClose = document.getElementById('modalClose');
-    var videoFrame = document.getElementById('videoFrame');
-
-    videoBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        // Replace this URL with your actual YouTube embed URL
-        videoFrame.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1';
-        modal.classList.add('active');
-    });
-
-    modalClose.addEventListener('click', function() {
-        closeModal();
-    });
-
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closeModal();
-        }
-    });
-
-    function closeModal() {
-        modal.classList.remove('active');
-        videoFrame.src = '';
-    }
-</script>
 
 {% endblock %}

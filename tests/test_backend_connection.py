@@ -19,7 +19,7 @@ def client(app):
 def seed_user_id(app):
     from database.db import get_db
     conn = get_db()
-    user = conn.execute("SELECT id FROM users WHERE email = %s", ("demo@spendly.com",)).fetchone()
+    user = conn.execute("SELECT id FROM users WHERE email = %s", ("plankmax05@gmail.com",)).fetchone()
     conn.close()
     return user["id"] if user else None
 
@@ -41,7 +41,7 @@ class TestGetUserById:
         from database.queries import get_user_by_id
         result = get_user_by_id(seed_user_id)
         assert result["name"] == "Demo User"
-        assert result["email"] == "demo@spendly.com"
+        assert result["email"] == "plankmax05@gmail.com"
         assert "member_since" in result
 
     def test_returns_none_for_nonexistent_id(self):
@@ -155,7 +155,7 @@ class TestProfileRoute:
         response = auth_client.get("/profile")
         html = response.get_data(as_text=True)
         assert "Demo User" in html
-        assert "demo@spendly.com" in html
+        assert "plankmax05@gmail.com" in html
 
     def test_authenticated_shows_rs_symbol(self, auth_client):
         response = auth_client.get("/profile")
