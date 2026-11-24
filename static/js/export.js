@@ -3,9 +3,7 @@
     var openBtn = document.getElementById('exportOpen');
     if (!modal || !openBtn) return;
 
-    var format = 'excel';
     var template = 'minimal';
-    var templates = document.getElementById('exportTemplates');
 
     function open() {
         modal.classList.add('active');
@@ -27,15 +25,6 @@
         if (e.key === 'Escape' && modal.classList.contains('active')) close();
     });
 
-    var formatBtns = Array.prototype.slice.call(modal.querySelectorAll('.export-format'));
-    formatBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            format = btn.dataset.format;
-            select(formatBtns, btn);
-            templates.classList.toggle('hidden', format !== 'excel');
-        });
-    });
-
     var cards = Array.prototype.slice.call(modal.querySelectorAll('.export-card'));
     cards.forEach(function (card) {
         card.addEventListener('click', function () {
@@ -48,13 +37,9 @@
         var params = new URLSearchParams();
         if (modal.dataset.dateFrom) params.set('date_from', modal.dataset.dateFrom);
         if (modal.dataset.dateTo) params.set('date_to', modal.dataset.dateTo);
-        var base = modal.dataset.pdfUrl;
-        if (format === 'excel') {
-            params.set('template', template);
-            base = modal.dataset.excelUrl;
-        }
+        params.set('template', template);
         var qs = params.toString();
-        window.location.href = qs ? base + '?' + qs : base;
+        window.location.href = modal.dataset.excelUrl + '?' + qs;
         close();
     });
 })();

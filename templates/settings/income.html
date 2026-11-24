@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Income — ExpenseTracker{% endblock %}
+{% block meta_description %}Track your monthly income across multiple sources with a full history.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page settings-page">
+    <div class="profile-section-header">
+        <h1 class="profile-section-title">
+            <i data-lucide="wallet"></i>
+            Monthly Income
+        </h1>
+        <div class="section-header-actions">
+            <a href="{{ url_for('settings_home') }}" class="btn-ghost">&larr; Back to Settings</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="profile-section">
+        <h2 class="profile-section-title">Add Income</h2>
+        <form method="POST" action="{{ url_for('settings_income') }}" class="settings-form">
+            <div class="settings-form-row">
+                <div class="form-group">
+                    <label for="source">Source</label>
+                    <input type="text" id="source" name="source" maxlength="30" placeholder="Salary, Freelancing, Business…" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <input type="number" id="amount" name="amount" min="0.01" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="effective_month">Effective Month</label>
+                    <input type="month" id="effective_month" name="effective_month" value="{{ current_month }}" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Add Income Entry</button>
+        </form>
+    </div>
+
+    <div class="profile-section">
+        <h2 class="profile-section-title">Income History</h2>
+        {% if entries %}
+        <table class="expenses-table">
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Amount</th>
+                    <th>Effective Month</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td data-label="Source">{{ entry.source }}</td>
+                    <td data-label="Amount">{{ currency_symbol }} {{ "%.2f"|format(entry.amount) }}</td>
+                    <td data-label="Effective Month">{{ entry.effective_month }}</td>
+                    <td data-label="Actions" class="expense-actions-cell">
+                        <form method="POST" action="{{ url_for('settings_income_delete', id=entry.id) }}" style="display:inline" onsubmit="return confirm('Remove this income entry?')">
+                            <button type="submit" class="btn-delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i data-lucide="wallet"></i></div>
+            <h3>No income recorded yet</h3>
+            <p>Add your first income entry above to start tracking it.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

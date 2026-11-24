@@ -1,0 +1,193 @@
+/* ------------------------------------------------------------------ */
+/* Settings hub cards                                                  */
+/* ------------------------------------------------------------------ */
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--radius-md);
+    margin-top: var(--radius-md);
+}
+
+.settings-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: var(--radius-lg);
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--ink);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.settings-card:hover {
+    border-color: var(--neon-green);
+    transform: translateY(-2px);
+}
+
+.settings-card i {
+    color: var(--neon-green);
+}
+
+.settings-card h2 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.settings-card p {
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Settings forms                                                      */
+/* ------------------------------------------------------------------ */
+
+.settings-form {
+    margin-top: var(--radius-sm);
+}
+
+.settings-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--radius-md);
+    margin-bottom: var(--radius-md);
+}
+
+.settings-form-row .form-group {
+    flex: 1;
+    min-width: 160px;
+}
+
+.settings-form .form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+}
+
+.settings-form .form-group input,
+.settings-form .form-group select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background-color: var(--paper);
+    font-family: var(--font-body);
+}
+
+.settings-form .form-group input:focus,
+.settings-form .form-group select:focus {
+    outline: none;
+    border-color: var(--neon-green);
+}
+
+/* ------------------------------------------------------------------ */
+/* Category list                                                       */
+/* ------------------------------------------------------------------ */
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--radius-sm);
+    margin-top: var(--radius-md);
+}
+
+.category-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--radius-sm);
+    padding: var(--radius-sm) var(--radius-md);
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.category-row.is-archived {
+    opacity: 0.6;
+}
+
+.category-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.category-row-name {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.category-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.inline-form {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-muted {
+    background: var(--paper-warm);
+    color: var(--ink-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Budget items                                                        */
+/* ------------------------------------------------------------------ */
+
+.budget-item {
+    padding: var(--radius-md);
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--radius-sm);
+}
+
+.budget-item.is-warning {
+    border-color: var(--danger);
+}
+
+.budget-warning {
+    color: var(--danger);
+    font-size: 0.8125rem;
+    margin: 0.5rem 0 0;
+}
+
+@media (max-width: 480px) {
+    .category-row-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .inline-form {
+        flex-wrap: wrap;
+    }
+}

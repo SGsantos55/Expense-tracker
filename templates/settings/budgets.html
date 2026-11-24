@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Budgets — ExpenseTracker{% endblock %}
+{% block meta_description %}Set an overall monthly budget and per-category limits, and track consumption.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page settings-page">
+    <div class="profile-section-header">
+        <h1 class="profile-section-title">
+            <i data-lucide="pie-chart"></i>
+            Monthly Budgets
+        </h1>
+        <div class="section-header-actions">
+            <a href="{{ url_for('settings_home') }}" class="btn-ghost">&larr; Back to Settings</a>
+        </div>
+    </div>
+    <p class="danger-text">Current financial month: {{ period_start }} to {{ period_end }}</p>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="profile-section">
+        <h2 class="profile-section-title">Overall Monthly Budget</h2>
+        <form method="POST" action="{{ url_for('settings_budgets') }}" class="settings-form">
+            <input type="hidden" name="scope" value="overall">
+            <div class="settings-form-row">
+                <div class="form-group">
+                    <label for="overall_limit">Monthly Limit</label>
+                    <input type="text" id="overall_limit" name="monthly_limit" inputmode="decimal" pattern="[0-9]*\.?[0-9]*"
+                           value="{{ overall_budget.monthly_limit if overall_budget else '' }}" placeholder="e.g. 500" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Save Overall Budget</button>
+        </form>
+
+        {% if overall_budget %}
+        <div class="budget-item {% if overall_near_limit %}is-warning{% endif %}">
+            <div class="category-header">
+                <span class="category-name">Spent {{ currency_symbol }} {{ "%.2f"|format(overall_spent) }} of {{ currency_symbol }} {{ "%.2f"|format(overall_budget.monthly_limit) }}</span>
+                <span class="category-amount">{{ overall_pct }}%</span>
+            </div>
+            <div class="category-bar-track">
+                <div class="category-bar {% if overall_near_limit %}secondary{% endif %}" style="width: {{ [overall_pct, 100] | min }}%"></div>
+            </div>
+            {% if overall_near_limit %}
+            <p class="budget-warning">You're approaching your overall monthly budget.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="profile-section">
+        <h2 class="profile-section-title">Category Budgets</h2>
+        {% if category_rows %}
+        <div class="category-list">
+            {% for row in category_rows %}
+            <div class="budget-item {% if row.near_limit %}is-warning{% endif %}">
+                <form method="POST" action="{{ url_for('settings_budgets') }}" class="settings-form inline-form">
+                    <input type="hidden" name="scope" value="{{ row.category.id }}">
+                    <span class="category-row-name">{{ row.category.name }}</span>
+                    <input type="text" name="monthly_limit" inputmode="decimal" pattern="[0-9]*\.?[0-9]*"
+                           value="{{ row.limit if row.limit is not none else '' }}" placeholder="Set limit">
+                    <button type="submit" class="btn-ghost">Save</button>
+                </form>
+                {% if row.limit %}
+                <div class="category-header">
+                    <span class="category-name">Spent {{ currency_symbol }} {{ "%.2f"|format(row.spent) }} of {{ currency_symbol }} {{ "%.2f"|format(row.limit) }}</span>
+                    <span class="category-amount">{{ row.pct }}%</span>
+                </div>
+                <div class="category-bar-track">
+                    <div class="category-bar {% if row.near_limit %}secondary{% endif %}" style="width: {{ [row.pct, 100] | min }}%"></div>
+                </div>
+                {% if row.near_limit %}
+                <p class="budget-warning">You're approaching this category's budget.</p>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="danger-text">Add expense categories in Settings &rarr; Categories to set per-category budgets.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

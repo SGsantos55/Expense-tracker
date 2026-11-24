@@ -335,9 +335,13 @@ def get_category_breakdown(user_id, date_from=None, date_to=None):
             params.extend([date_from, date_to])
 
         rows = conn.execute(
-            f"""SELECT category, SUM(amount) as total
-               FROM expenses WHERE user_id = %s{date_filter}
-               GROUP BY category ORDER BY total DESC""",
+            f"""SELECT e.category AS category, SUM(e.amount) as total,
+                       MAX(c.color) AS color
+               FROM expenses e
+               LEFT JOIN categories c
+                   ON c.user_id = e.user_id AND c.type = 'expense' AND c.name = e.category
+               WHERE e.user_id = %s{date_filter}
+               GROUP BY e.category ORDER BY total DESC""",
             params
         ).fetchall()
 
@@ -356,7 +360,8 @@ def get_category_breakdown(user_id, date_from=None, date_to=None):
             categories.append({
                 "name": row["category"],
                 "amount": row["total"],
-                "pct": pct
+                "pct": pct,
+                "color": row["color"]
             })
 
         # Adjust largest to absorb rounding remainder
