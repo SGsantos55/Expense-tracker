@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — ExpenseTracker{% endblock %}
+{% block meta_description %}Manage your custom categories, income history, budgets and display preferences.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page settings-page">
+    <div class="profile-section-header">
+        <h1 class="profile-section-title">
+            <i data-lucide="settings"></i>
+            Profile &amp; Financial Settings
+        </h1>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="settings-grid">
+        <a href="{{ url_for('settings_categories') }}" class="settings-card">
+            <i data-lucide="tags"></i>
+            <h2>Custom Categories</h2>
+            <p>Add, edit, archive or delete expense and income categories.</p>
+        </a>
+        <a href="{{ url_for('settings_income') }}" class="settings-card">
+            <i data-lucide="wallet"></i>
+            <h2>Monthly Income</h2>
+            <p>Track income from multiple sources and keep a full history.</p>
+        </a>
+        <a href="{{ url_for('settings_budgets') }}" class="settings-card">
+            <i data-lucide="pie-chart"></i>
+            <h2>Monthly Budgets</h2>
+            <p>Set an overall budget and per-category limits with usage warnings.</p>
+        </a>
+        <a href="{{ url_for('settings_preferences') }}" class="settings-card">
+            <i data-lucide="sliders"></i>
+            <h2>Preferences</h2>
+            <p>Currency, financial month start day, date and number formats.</p>
+        </a>
+    </div>
+</section>
+{% endblock %}

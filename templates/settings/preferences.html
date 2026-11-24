@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Preferences — ExpenseTracker{% endblock %}
+{% block meta_description %}Choose your preferred currency, financial month start day, date and number formats.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page settings-page">
+    <div class="profile-section-header">
+        <h1 class="profile-section-title">
+            <i data-lucide="sliders"></i>
+            Preferences
+        </h1>
+        <div class="section-header-actions">
+            <a href="{{ url_for('settings_home') }}" class="btn-ghost">&larr; Back to Settings</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="profile-section">
+        <form method="POST" action="{{ url_for('settings_preferences') }}" class="settings-form">
+            <div class="settings-form-row">
+                <div class="form-group">
+                    <label for="preferred_currency">Preferred Currency</label>
+                    <select id="preferred_currency" name="preferred_currency" required>
+                        {% for choice in currency_choices %}
+                        <option value="{{ choice }}" {% if prefs.preferred_currency == choice %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="financial_month_start_day">First Day of Financial Month</label>
+                    <input type="number" id="financial_month_start_day" name="financial_month_start_day"
+                           min="1" max="28" value="{{ prefs.financial_month_start_day }}" required>
+                </div>
+            </div>
+            <div class="settings-form-row">
+                <div class="form-group">
+                    <label for="date_format">Date Format</label>
+                    <select id="date_format" name="date_format" required>
+                        {% for choice in date_format_choices %}
+                        <option value="{{ choice }}" {% if prefs.date_format == choice %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="number_format">Number Format</label>
+                    <select id="number_format" name="number_format" required>
+                        {% for choice in number_format_choices %}
+                        <option value="{{ choice }}" {% if prefs.number_format == choice %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="default_export_format">Default Export Format</label>
+                    <select id="default_export_format" name="default_export_format" required>
+                        {% for choice in export_format_choices %}
+                        <option value="{{ choice }}" {% if prefs.default_export_format == choice %}selected{% endif %}>{{ choice | upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Save Preferences</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

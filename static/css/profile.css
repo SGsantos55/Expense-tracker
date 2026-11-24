@@ -424,31 +424,6 @@
     margin: 0 0 var(--radius-md);
 }
 
-.export-formats {
-    display: flex;
-    gap: var(--radius-sm);
-    margin-bottom: var(--radius-md);
-}
-
-.export-format {
-    flex: 1;
-    padding: 10px 16px;
-    font-family: var(--font-body);
-    font-weight: 500;
-    color: var(--ink-soft);
-    background: var(--paper);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-}
-
-.export-format.active {
-    background: var(--neon-green-light);
-    border-color: var(--neon-green);
-    color: var(--ink);
-    font-weight: 600;
-}
-
 .export-templates {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
 from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user, get_user_by_email_for_auth, set_email_verified, update_password_hash, create_auth_token, get_valid_auth_token, mark_token_used, delete_user
+from database.settings_queries import get_categories, create_category, update_category, set_category_archived, delete_category, get_income_entries, add_income_entry, delete_income_entry, get_budgets, set_overall_budget, set_category_budget, get_budget_consumption, get_user_preferences, update_user_preferences
 from database.excel import build_expense_workbook, TEMPLATES as EXPORT_TEMPLATES, DEFAULT_TEMPLATE
 from database.pdf import build_expense_pdf
 from database.mailer import send_verification_email, send_password_reset_email
@@ -21,6 +22,21 @@ VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Sh
 CUSTOM_CATEGORY_SENTINEL = "__custom__"
 CUSTOM_CATEGORY_MAX_LENGTH = 30
 CUSTOM_CATEGORY_PATTERN = re.compile(r"^[A-Za-z0-9 ]+$")
+
+CURRENCY_CHOICES = ["USD", "EUR", "GBP", "INR", "NPR", "AUD", "CAD"]
+CURRENCY_SYMBOLS = {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "INR": "₹",
+    "NPR": "Rs",
+    "AUD": "A$",
+    "CAD": "C$",
+}
+DATE_FORMAT_CHOICES = ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY"]
+NUMBER_FORMAT_CHOICES = ["1,234.56", "1.234,56", "1 234.56"]
+EXPORT_FORMAT_CHOICES = ["xlsx", "pdf"]
+BUDGET_WARNING_THRESHOLD = 90
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
@@ -62,17 +78,67 @@ def load_user():
 
 @app.context_processor
 def inject_categories():
-    """Make preset categories and the custom sentinel available to all templates."""
+    """Make preset + user-defined categories and the custom sentinel available to all templates."""
     return {
-        "valid_categories": VALID_CATEGORIES,
+        "valid_categories": _user_expense_categories(),
         "custom_category_sentinel": CUSTOM_CATEGORY_SENTINEL,
         "custom_category_max_length": CUSTOM_CATEGORY_MAX_LENGTH,
+    }
+
+
+@app.context_processor
+def inject_currency():
+    """Make the user's preferred currency symbol available to all templates."""
+    currency_code = "NPR"
+    if g.get("user_id"):
+        currency_code = get_user_preferences(g.user_id).get("preferred_currency", "NPR")
+    return {
+        "currency_code": currency_code,
+        "currency_symbol": CURRENCY_SYMBOLS.get(currency_code, currency_code),
     }
 
 
 # ------------------------------------------------------------------ #
 # Helpers                                                              #
 # ------------------------------------------------------------------ #
+
+def _user_expense_categories():
+    """Return the preset categories plus the user's own active expense categories."""
+    if not g.get("user_id"):
+        return list(VALID_CATEGORIES)
+    custom = [c["name"] for c in get_categories(g.user_id, type="expense", include_archived=False)]
+    return VALID_CATEGORIES + [name for name in custom if name not in VALID_CATEGORIES]
+
+
+def _validate_category_name(name):
+    """Validate a custom category/income-source name. Returns a list of errors."""
+    errors = []
+    if not name:
+        errors.append("Category name is required")
+    elif len(name) > CUSTOM_CATEGORY_MAX_LENGTH:
+        errors.append(f"Category name must be {CUSTOM_CATEGORY_MAX_LENGTH} characters or fewer")
+    elif not CUSTOM_CATEGORY_PATTERN.match(name):
+        errors.append("Category name can only contain letters, numbers and spaces")
+    return errors
+
+
+def _financial_month_range(today, start_day):
+    """Return (start_date, end_date) for the financial month containing `today`."""
+    start_day = max(1, min(28, start_day))
+    if today.day >= start_day:
+        start = today.replace(day=start_day)
+    else:
+        first_of_this_month = today.replace(day=1)
+        prev_month_end = first_of_this_month - timedelta(days=1)
+        start = prev_month_end.replace(day=min(start_day, prev_month_end.day))
+
+    if start.month == 12:
+        next_month_start = start.replace(year=start.year + 1, month=1)
+    else:
+        next_month_start = start.replace(month=start.month + 1)
+    end = next_month_start - timedelta(days=1)
+    return start, end
+
 
 def resolve_category(form):
     """Return the effective category, resolving the custom-category sentinel."""
@@ -82,8 +148,10 @@ def resolve_category(form):
     return category
 
 
-def validate_expense_form(form):
+def validate_expense_form(form, valid_categories=None):
     """Validate expense form data. Returns a list of error strings."""
+    if valid_categories is None:
+        valid_categories = VALID_CATEGORIES
     errors = []
     amount_str = form.get("amount", "").strip()
     category_choice = form.get("category", "").strip()
@@ -111,7 +179,7 @@ def validate_expense_form(form):
             )
         elif not CUSTOM_CATEGORY_PATTERN.match(custom_category):
             errors.append("Category can only contain letters, numbers and spaces")
-    elif category_choice not in VALID_CATEGORIES:
+    elif category_choice not in valid_categories:
         errors.append("Please select a valid category")
 
     if not date_str:
@@ -540,6 +608,7 @@ def profile():
     stats = get_summary_stats(g.user_id, validated_from, validated_to)
     recent = get_recent_transactions(g.user_id, 10, validated_from, validated_to)
     categories = get_category_breakdown(g.user_id, validated_from, validated_to)
+    export_format = get_user_preferences(g.user_id).get("default_export_format", "xlsx")
 
     today = date_obj.today()
     first_day_of_month = today.replace(day=1)
@@ -555,6 +624,7 @@ def profile():
         recent=recent,
         date_from=validated_from,
         date_to=validated_to,
+        export_format=export_format,
         preset_this_month_from=first_day_of_month.strftime("%Y-%m-%d"),
         preset_this_month_to=today.strftime("%Y-%m-%d"),
         preset_3months_from=(today - timedelta(days=90)).strftime("%Y-%m-%d"),
@@ -578,7 +648,7 @@ def add_expense():
         description_raw = request.form.get("description", "").strip()
         description = None if not description_raw else description_raw
 
-        errors = validate_expense_form(request.form)
+        errors = validate_expense_form(request.form, _user_expense_categories())
 
         if errors:
             return render_template(
@@ -642,7 +712,7 @@ def edit_expense(id):
         return "", 404
 
     # Validate form data using the same validation as add_expense
-    errors = validate_expense_form(request.form)
+    errors = validate_expense_form(request.form, _user_expense_categories())
 
     if errors:
         # Re-render form with errors and submitted values
@@ -778,6 +848,283 @@ def export_expenses_pdf():
         pdf_bytes,
         mimetype="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+# ------------------------------------------------------------------ #
+# Profile & financial settings                                        #
+# ------------------------------------------------------------------ #
+
+@app.route("/settings")
+def settings_home():
+    if not g.user_id:
+        return redirect(url_for("login"))
+    return render_template("settings/index.html")
+
+
+@app.route("/settings/categories", methods=["GET", "POST"])
+def settings_categories():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        category_type = request.form.get("type", "").strip()
+        color = request.form.get("color", "").strip() or None
+
+        errors = _validate_category_name(name)
+        if category_type not in ("expense", "income"):
+            errors.append("Please choose a category type")
+
+        if errors:
+            for error in errors:
+                flash(error)
+        else:
+            try:
+                create_category(g.user_id, name, category_type, color=color)
+                flash("Category added.")
+            except Exception as e:
+                app.logger.error(f"Failed to create category: {e}")
+                flash("A category with that name already exists for this type.")
+
+        return redirect(url_for("settings_categories"))
+
+    expense_categories = get_categories(g.user_id, type="expense", include_archived=True)
+    income_categories = get_categories(g.user_id, type="income", include_archived=True)
+    return render_template(
+        "settings/categories.html",
+        expense_categories=expense_categories,
+        income_categories=income_categories
+    )
+
+
+@app.route("/settings/categories/<int:id>/edit", methods=["POST"])
+def settings_category_edit(id):
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    name = request.form.get("name", "").strip()
+    color = request.form.get("color", "").strip() or None
+
+    errors = _validate_category_name(name)
+    if errors:
+        for error in errors:
+            flash(error)
+    else:
+        try:
+            updated = update_category(id, g.user_id, name, color=color)
+            flash("Category updated." if updated else "Category not found.")
+        except Exception as e:
+            app.logger.error(f"Failed to update category: {e}")
+            flash("A category with that name already exists for this type.")
+
+    return redirect(url_for("settings_categories"))
+
+
+@app.route("/settings/categories/<int:id>/archive", methods=["POST"])
+def settings_category_archive(id):
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    archived = request.form.get("archived") == "1"
+    updated = set_category_archived(id, g.user_id, archived)
+    if updated:
+        flash("Category archived." if archived else "Category restored.")
+    else:
+        flash("Category not found.")
+
+    return redirect(url_for("settings_categories"))
+
+
+@app.route("/settings/categories/<int:id>/delete", methods=["POST"])
+def settings_category_delete(id):
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    result = delete_category(id, g.user_id)
+    if result == "deleted":
+        flash("Category deleted.")
+    elif result == "in_use":
+        flash("This category is used by existing expenses and cannot be deleted. Archive it instead.")
+    else:
+        flash("Category not found.")
+
+    return redirect(url_for("settings_categories"))
+
+
+@app.route("/settings/income", methods=["GET", "POST"])
+def settings_income():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        source = request.form.get("source", "").strip()
+        amount_str = request.form.get("amount", "").strip()
+        effective_month = request.form.get("effective_month", "").strip()
+
+        errors = []
+        if not source:
+            errors.append("Income source is required")
+        elif len(source) > CUSTOM_CATEGORY_MAX_LENGTH:
+            errors.append(f"Income source must be {CUSTOM_CATEGORY_MAX_LENGTH} characters or fewer")
+
+        try:
+            amount = float(amount_str)
+            if amount <= 0:
+                errors.append("Amount must be greater than zero")
+        except ValueError:
+            errors.append("Amount must be a valid number")
+
+        if not effective_month:
+            errors.append("Effective month is required")
+        else:
+            try:
+                datetime.strptime(effective_month, "%Y-%m")
+            except ValueError:
+                errors.append("Effective month must be in YYYY-MM format")
+
+        if errors:
+            for error in errors:
+                flash(error)
+        else:
+            add_income_entry(g.user_id, source, float(amount_str), effective_month)
+            flash("Income entry added.")
+
+        return redirect(url_for("settings_income"))
+
+    entries = get_income_entries(g.user_id)
+    current_month = date_obj.today().strftime("%Y-%m")
+    return render_template("settings/income.html", entries=entries, current_month=current_month)
+
+
+@app.route("/settings/income/<int:id>/delete", methods=["POST"])
+def settings_income_delete(id):
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if delete_income_entry(id, g.user_id):
+        flash("Income entry removed.")
+    else:
+        flash("Income entry not found.")
+
+    return redirect(url_for("settings_income"))
+
+
+@app.route("/settings/budgets", methods=["GET", "POST"])
+def settings_budgets():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        scope = request.form.get("scope", "").strip()
+        amount_str = request.form.get("monthly_limit", "").strip()
+
+        try:
+            monthly_limit = float(amount_str)
+            if monthly_limit <= 0:
+                raise ValueError
+        except ValueError:
+            flash("Budget amount must be a positive number")
+            return redirect(url_for("settings_budgets"))
+
+        if scope == "overall":
+            set_overall_budget(g.user_id, monthly_limit)
+        else:
+            try:
+                category_id = int(scope)
+            except ValueError:
+                flash("Invalid budget category")
+                return redirect(url_for("settings_budgets"))
+            set_category_budget(g.user_id, category_id, monthly_limit)
+
+        flash("Budget saved.")
+        return redirect(url_for("settings_budgets"))
+
+    prefs = get_user_preferences(g.user_id)
+    start, end = _financial_month_range(date_obj.today(), prefs["financial_month_start_day"])
+    period_start, period_end = start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
+
+    budgets = get_budgets(g.user_id)
+    consumption = get_budget_consumption(g.user_id, period_start, period_end)
+    expense_categories = get_categories(g.user_id, type="expense", include_archived=False)
+
+    overall_budget = next((b for b in budgets if b["category_id"] is None), None)
+    overall_spent = consumption["overall"]
+    overall_pct = (
+        round((overall_spent / overall_budget["monthly_limit"]) * 100) if overall_budget else None
+    )
+
+    category_rows = []
+    for category in expense_categories:
+        budget = next((b for b in budgets if b["category_id"] == category["id"]), None)
+        spent = consumption["by_category"].get(category["name"], 0.0)
+        limit = budget["monthly_limit"] if budget else None
+        pct = round((spent / limit) * 100) if limit else None
+        category_rows.append({
+            "category": category,
+            "limit": limit,
+            "spent": spent,
+            "pct": pct,
+            "near_limit": pct is not None and pct >= BUDGET_WARNING_THRESHOLD,
+        })
+
+    return render_template(
+        "settings/budgets.html",
+        overall_budget=overall_budget,
+        overall_spent=overall_spent,
+        overall_pct=overall_pct,
+        overall_near_limit=overall_pct is not None and overall_pct >= BUDGET_WARNING_THRESHOLD,
+        category_rows=category_rows,
+        period_start=period_start,
+        period_end=period_end,
+    )
+
+
+@app.route("/settings/preferences", methods=["GET", "POST"])
+def settings_preferences():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        currency = request.form.get("preferred_currency", "").strip()
+        try:
+            start_day = int(request.form.get("financial_month_start_day", "1"))
+        except ValueError:
+            start_day = 1
+        start_day = max(1, min(28, start_day))
+        date_format = request.form.get("date_format", "").strip()
+        number_format = request.form.get("number_format", "").strip()
+        export_format = request.form.get("default_export_format", "").strip()
+
+        errors = []
+        if currency not in CURRENCY_CHOICES:
+            errors.append("Please choose a valid currency")
+        if date_format not in DATE_FORMAT_CHOICES:
+            errors.append("Please choose a valid date format")
+        if number_format not in NUMBER_FORMAT_CHOICES:
+            errors.append("Please choose a valid number format")
+        if export_format not in EXPORT_FORMAT_CHOICES:
+            errors.append("Please choose a valid export format")
+
+        if errors:
+            for error in errors:
+                flash(error)
+        else:
+            update_user_preferences(
+                g.user_id, currency, start_day, date_format, number_format, export_format
+            )
+            flash("Preferences updated.")
+
+        return redirect(url_for("settings_preferences"))
+
+    prefs = get_user_preferences(g.user_id)
+    return render_template(
+        "settings/preferences.html",
+        prefs=prefs,
+        currency_choices=CURRENCY_CHOICES,
+        date_format_choices=DATE_FORMAT_CHOICES,
+        number_format_choices=NUMBER_FORMAT_CHOICES,
+        export_format_choices=EXPORT_FORMAT_CHOICES,
     )
 
 

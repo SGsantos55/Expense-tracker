@@ -63,6 +63,42 @@ def init_db():
         conn.execute(
             'CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_tokens_hash ON auth_tokens(token_hash)'
         )
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL CHECK (type IN ('expense', 'income')),
+                icon TEXT,
+                color TEXT,
+                is_archived SMALLINT NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT (now()::text),
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                UNIQUE (user_id, name, type)
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS income_entries (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                source TEXT NOT NULL,
+                amount DOUBLE PRECISION NOT NULL,
+                effective_month TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (now()::text),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS budgets (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                category_id INTEGER,
+                monthly_limit DOUBLE PRECISION NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (now()::text),
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (category_id) REFERENCES categories(id)
+            )
+        ''')
         _run_migrations(conn)
         conn.commit()
     finally:
@@ -74,6 +110,29 @@ def _run_migrations(conn):
     conn.execute(
         'ALTER TABLE users ADD COLUMN IF NOT EXISTS '
         'email_verified SMALLINT NOT NULL DEFAULT 0'
+    )
+    conn.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+        "preferred_currency TEXT NOT NULL DEFAULT 'NPR'"
+    )
+    conn.execute(
+        "ALTER TABLE users ALTER COLUMN preferred_currency SET DEFAULT 'NPR'"
+    )
+    conn.execute(
+        'ALTER TABLE users ADD COLUMN IF NOT EXISTS '
+        'financial_month_start_day SMALLINT NOT NULL DEFAULT 1'
+    )
+    conn.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+        "date_format TEXT NOT NULL DEFAULT 'YYYY-MM-DD'"
+    )
+    conn.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+        "number_format TEXT NOT NULL DEFAULT '1,234.56'"
+    )
+    conn.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+        "default_export_format TEXT NOT NULL DEFAULT 'xlsx'"
     )
 
 

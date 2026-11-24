@@ -59,7 +59,7 @@
                         <i data-lucide="wallet"></i>
                     </div>
                 </div>
-                <div class="stat-value">Rs {{ "%.2f"|format(total) }}</div>
+                <div class="stat-value">{{ currency_symbol }} {{ "%.2f"|format(total) }}</div>
             </div>
 
             <div class="stat-card secondary">
@@ -101,11 +101,11 @@
                         <i data-lucide="tag"></i>
                         {{ cat.name }}
                     </span>
-                    <span class="category-amount">Rs {{ "%.2f"|format(cat.amount) }}</span>
+                    <span class="category-amount">{{ currency_symbol }} {{ "%.2f"|format(cat.amount) }}</span>
                 </div>
                 <div class="category-bar-track">
                     {% set bar_class = 'secondary' if loop.index == 2 else ('tertiary' if loop.index > 2 else '') %}
-                    <div class="category-bar {{ bar_class }}" style="width: {{ cat.pct }}%"></div>
+                    <div class="category-bar {{ bar_class }}" style="width: {{ cat.pct }}%{% if cat.color %}; background-color: {{ cat.color }}{% endif %}"></div>
                 </div>
             </div>
             {% endfor %}
@@ -121,7 +121,11 @@
                 Recent Transactions
             </h2>
             <div class="section-header-actions">
+                {% if export_format == 'pdf' %}
+                <a href="{{ url_for('export_expenses_pdf', date_from=date_from, date_to=date_to) }}" class="btn-ghost">Export</a>
+                {% else %}
                 <button type="button" class="btn-ghost" id="exportOpen">Export</button>
+                {% endif %}
                 <a href="{{ url_for('add_expense') }}" class="btn-primary">Add Expense</a>
             </div>
         </div>
@@ -143,7 +147,7 @@
                     <td data-label="Description">{{ expense.description or 'No description' }}</td>
                     <td data-label="Category">{{ expense.category }}</td>
                     <td data-label="Date">{{ expense.date }}</td>
-                    <td data-label="Amount">Rs {{ "%.2f"|format(expense.amount) }}</td>
+                    <td data-label="Amount">{{ currency_symbol }} {{ "%.2f"|format(expense.amount) }}</td>
                     <td data-label="Actions" class="expense-actions-cell">
                         <a href="{{ url_for('edit_expense', id=expense.id) }}" class="btn-edit">Edit</a>
                         <form method="POST" action="{{ url_for('delete_expense', id=expense.id) }}" style="display:inline"
@@ -171,6 +175,19 @@
 
     {# Danger Zone #}
     <div class="profile-section">
+        <div class="profile-section-header">
+            <h2 class="profile-section-title">
+                <i data-lucide="settings"></i>
+                Account Settings
+            </h2>
+            <div class="section-header-actions">
+                <a href="{{ url_for('settings_home') }}" class="btn-primary">Manage Settings</a>
+            </div>
+        </div>
+        <p class="danger-text">Set up custom categories, income history, budgets and display preferences.</p>
+    </div>
+
+    <div class="profile-section">
         <div class="danger-zone">
             <div class="profile-section-header">
                 <h2 class="profile-section-title">
@@ -186,19 +203,14 @@
     </div>
 </section>
 
+{% if export_format != 'pdf' %}
 <div class="export-overlay" id="exportModal" aria-hidden="true"
      data-excel-url="{{ url_for('export_expenses') }}"
-     data-pdf-url="{{ url_for('export_expenses_pdf') }}"
      data-date-from="{{ date_from or '' }}" data-date-to="{{ date_to or '' }}">
     <div class="export-panel" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
         <button type="button" class="export-close" id="exportClose" aria-label="Close">&times;</button>
         <h2 id="exportTitle" class="export-title">Export your expenses</h2>
         <p class="export-sub">{% if date_from and date_to %}Range: {{ date_from }} to {{ date_to }}{% else %}All time{% endif %}</p>
-
-        <div class="export-formats">
-            <button type="button" class="export-format active" data-format="excel">Excel (.xlsx)</button>
-            <button type="button" class="export-format" data-format="pdf">PDF statement</button>
-        </div>
 
         <div class="export-templates" id="exportTemplates">
             <button type="button" class="export-card active" data-template="minimal">
@@ -226,4 +238,5 @@
     </div>
 </div>
 <script src="{{ url_for('static', filename='js/export.js') }}"></script>
+{% endif %}
 {% endblock %}
