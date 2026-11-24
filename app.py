@@ -869,19 +869,16 @@ def settings_categories():
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
-        category_type = request.form.get("type", "").strip()
         color = request.form.get("color", "").strip() or None
 
         errors = _validate_category_name(name)
-        if category_type not in ("expense", "income"):
-            errors.append("Please choose a category type")
 
         if errors:
             for error in errors:
                 flash(error)
         else:
             try:
-                create_category(g.user_id, name, category_type, color=color)
+                create_category(g.user_id, name, "expense", color=color)
                 flash("Category added.")
             except Exception as e:
                 app.logger.error(f"Failed to create category: {e}")
@@ -890,11 +887,9 @@ def settings_categories():
         return redirect(url_for("settings_categories"))
 
     expense_categories = get_categories(g.user_id, type="expense", include_archived=True)
-    income_categories = get_categories(g.user_id, type="income", include_archived=True)
     return render_template(
         "settings/categories.html",
-        expense_categories=expense_categories,
-        income_categories=income_categories
+        expense_categories=expense_categories
     )
 
 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Custom Categories — ExpenseTracker{% endblock %}
-{% block meta_description %}Manage your custom expense and income categories.{% endblock %}
+{% block meta_description %}Manage your custom expense categories.{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
@@ -33,7 +33,6 @@
     <div class="profile-section">
         <h2 class="profile-section-title">Expense Categories</h2>
         <form method="POST" action="{{ url_for('settings_categories') }}" class="settings-form">
-            <input type="hidden" name="type" value="expense">
             <div class="settings-form-row">
                 <div class="form-group">
                     <label for="expense-name">Name</label>
@@ -44,7 +43,7 @@
                     <input type="color" id="expense-color" name="color" value="#00E58F">
                 </div>
             </div>
-            <button type="submit" class="btn-primary">Add Expense Category</button>
+            <button type="submit" class="btn-primary">Add Category</button>
         </form>
         {% if expense_categories %}
         <div class="category-list">
@@ -72,51 +71,6 @@
         </div>
         {% else %}
         <p class="danger-text">No expense categories yet.</p>
-        {% endif %}
-    </div>
-
-    <div class="profile-section">
-        <h2 class="profile-section-title">Income Categories</h2>
-        <form method="POST" action="{{ url_for('settings_categories') }}" class="settings-form">
-            <input type="hidden" name="type" value="income">
-            <div class="settings-form-row">
-                <div class="form-group">
-                    <label for="income-name">Name</label>
-                    <input type="text" id="income-name" name="name" maxlength="{{ custom_category_max_length }}" placeholder="e.g. Freelancing" required>
-                </div>
-                <div class="form-group">
-                    <label for="income-color">Color</label>
-                    <input type="color" id="income-color" name="color" value="#00E58F">
-                </div>
-            </div>
-            <button type="submit" class="btn-primary">Add Income Category</button>
-        </form>
-        {% if income_categories %}
-        <div class="category-list">
-            {% for cat in income_categories %}
-            <div class="category-row {% if cat.is_archived %}is-archived{% endif %}">
-                <span class="category-swatch" style="background-color: {{ cat.color or '#00E58F' }}"></span>
-                <span class="category-row-name">{{ cat.name }}</span>
-                {% if cat.is_archived %}<span class="badge badge-muted">Archived</span>{% endif %}
-                <div class="category-row-actions">
-                    <form method="POST" action="{{ url_for('settings_category_edit', id=cat.id) }}" class="inline-form">
-                        <input type="text" name="name" value="{{ cat.name }}" maxlength="{{ custom_category_max_length }}" required>
-                        <input type="color" name="color" value="{{ cat.color or '#00E58F' }}">
-                        <button type="submit" class="btn-ghost">Save</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('settings_category_archive', id=cat.id) }}" class="inline-form">
-                        <input type="hidden" name="archived" value="{{ '0' if cat.is_archived else '1' }}">
-                        <button type="submit" class="btn-ghost">{{ 'Restore' if cat.is_archived else 'Archive' }}</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('settings_category_delete', id=cat.id) }}" class="inline-form" onsubmit="return confirm('Delete this category permanently?')">
-                        <button type="submit" class="btn-delete">Delete</button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="danger-text">No income categories yet.</p>
         {% endif %}
     </div>
 </section>
