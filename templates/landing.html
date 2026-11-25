@@ -399,6 +399,7 @@
             gap: 3.5rem;
             align-items: center;
         }
+        .hero-heading { font-size: clamp(2.4rem, 4.5vw, 3.4rem); }
         .hero-copy { text-align: left; }
         .hero-subtext { margin-left: 0; margin-right: 0; }
         .hero-actions { justify-content: flex-start; }
@@ -659,6 +660,43 @@
         margin: 0;
         color: var(--ink-muted);
         line-height: 1.7;
+    }
+
+    /* Home page responsive refinements */
+    @media (max-width: 900px) {
+        .hero-section { padding: 2.5rem 1.5rem 3rem; }
+        .features { padding: 3.5rem 1.5rem; }
+    }
+
+    @media (max-width: 640px) {
+        .hero-section { padding: 2rem 1.25rem 2.5rem; }
+        .hero-heading { font-size: 2.15rem; }
+        .hero-subtext { font-size: 1rem; }
+        .hero-badge { font-size: 0.72rem; padding: 0.35rem 0.85rem; }
+        .dashboard-header { flex-wrap: wrap; gap: 0.35rem 0.75rem; }
+        .dashboard-summary { gap: 0.9rem; }
+        .dashboard-metrics { gap: 1rem 1.5rem; }
+        .category-head span:last-child { display: none; }
+        .features { padding: 3rem 1.25rem; }
+        .cta-section { padding: 4rem 1.25rem; }
+        .footer { padding: 2rem 1.25rem; }
+        .footer-links { flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.25rem; }
+        .step { padding: 1rem; }
+        .faq-list { padding: 0 1rem; }
+    }
+
+    @media (max-width: 420px) {
+        .hero-heading { font-size: 1.85rem; }
+        .dashboard-card { padding: 1.25rem; }
+        .dashboard-summary { gap: 0.75rem; }
+        .dashboard-total { font-size: 1.7rem; }
+        .budget-ring { width: 72px; height: 72px; }
+        .budget-ring::before { inset: 7px; }
+        .budget-ring-inner strong { font-size: 0.95rem; }
+        .benefit-card { padding: 1.25rem; }
+        .category-row { grid-template-columns: 56px 1fr auto; gap: 0.5rem; }
+        .category-name { font-size: 0.85rem; }
+        .category-amount { font-size: 0.85rem; }
     }
 </style>
 {% endblock %}
