@@ -289,7 +289,7 @@ def sitemap_xml():
 
 @app.route("/")
 def landing():
-    return render_template("landing.html")
+    return render_template("landing.html", current_month=datetime.now().strftime("%B %Y"))
 
 
 @app.route("/register", methods=["GET", "POST"])
