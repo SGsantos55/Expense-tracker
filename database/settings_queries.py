@@ -1,10 +1,38 @@
 """Pure query functions for profile & financial settings — no Flask imports."""
 from database.db import get_db
+from database.defaults import DEFAULT_EXPENSE_CATEGORIES
 
 
 # ------------------------------------------------------------------ #
 # Categories                                                           #
 # ------------------------------------------------------------------ #
+
+def seed_default_categories(user_id):
+    """Create the built-in expense categories for a user who has none yet.
+
+    Idempotent: only runs when the user has no categories at all (including
+    archived ones), so deleting or archiving a default is respected later.
+    Returns True when categories were inserted.
+    """
+    conn = get_db()
+    try:
+        existing = conn.execute(
+            "SELECT 1 FROM categories WHERE user_id = %s LIMIT 1", (user_id,)
+        ).fetchone()
+        if existing:
+            return False
+
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO categories (user_id, name, type, color) "
+                "VALUES (%s, %s, 'expense', %s)",
+                [(user_id, name, color) for name, color in DEFAULT_EXPENSE_CATEGORIES],
+            )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
 
 def get_categories(user_id, type=None, include_archived=False):
     """Return a user's categories, optionally filtered by type/archived state."""
@@ -54,14 +82,30 @@ def create_category(user_id, name, category_type, icon=None, color=None):
 
 
 def update_category(category_id, user_id, name, icon=None, color=None):
-    """Rename/re-icon/recolor a category owned by the user."""
+    """Rename/re-icon/recolor a category owned by the user.
+
+    Renaming also updates existing expenses that used the old name so budgets
+    and reports stay consistent (expenses store the category name as text).
+    """
     conn = get_db()
     try:
+        current = conn.execute(
+            "SELECT name FROM categories WHERE id = %s AND user_id = %s",
+            (category_id, user_id)
+        ).fetchone()
+        if not current:
+            return False
+
         cursor = conn.execute(
             "UPDATE categories SET name = %s, icon = %s, color = %s "
             "WHERE id = %s AND user_id = %s",
             (name, icon, color, category_id, user_id)
         )
+        if current["name"] != name:
+            conn.execute(
+                "UPDATE expenses SET category = %s WHERE user_id = %s AND category = %s",
+                (name, user_id, current["name"])
+            )
         conn.commit()
         return cursor.rowcount > 0
     finally:

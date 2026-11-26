@@ -124,7 +124,7 @@ class TestDeleteExpenseRoute:
 
     def test_non_existent_id_returns_404(self, auth_client):
         """POST with non-existent id should return 404."""
-        response = auth_client.post("/expenses/-999/delete")
+        response = auth_client.post("/expenses/999999/delete")
         assert response.status_code == 404
 
     def test_get_request_returns_405(self, auth_client, seed_expense_id):

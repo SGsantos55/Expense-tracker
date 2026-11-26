@@ -19,7 +19,10 @@
             <a href="{{ url_for('settings_home') }}" class="btn-ghost">&larr; Back to Settings</a>
         </div>
     </div>
-    <p class="danger-text">Current financial month: {{ period_start }} to {{ period_end }}</p>
+    <p class="settings-meta">
+        <i data-lucide="calendar"></i>
+        Current financial month: {{ period_start|fmt_date }} to {{ period_end|fmt_date }}
+    </p>
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -31,66 +34,86 @@
         {% endif %}
     {% endwith %}
 
-    <div class="profile-section">
+    <div class="profile-section settings-panel">
         <h2 class="profile-section-title">Overall Monthly Budget</h2>
         <form method="POST" action="{{ url_for('settings_budgets') }}" class="settings-form">
             <input type="hidden" name="scope" value="overall">
             <div class="settings-form-row">
                 <div class="form-group">
                     <label for="overall_limit">Monthly Limit</label>
-                    <input type="text" id="overall_limit" name="monthly_limit" inputmode="decimal" pattern="[0-9]*\.?[0-9]*"
-                           value="{{ overall_budget.monthly_limit if overall_budget else '' }}" placeholder="e.g. 500" required>
+                    <div class="input-with-prefix">
+                        <span class="input-prefix">{{ currency_symbol }}</span>
+                        <input type="text" id="overall_limit" name="monthly_limit" inputmode="decimal" pattern="[0-9]*\.?[0-9]*"
+                               value="{{ overall_budget.monthly_limit if overall_budget else '' }}" placeholder="e.g. 500" required>
+                    </div>
+                    <p class="settings-help">Tracked against all expenses this financial month.</p>
                 </div>
             </div>
             <button type="submit" class="btn-primary">Save Overall Budget</button>
         </form>
 
         {% if overall_budget %}
-        <div class="budget-item {% if overall_near_limit %}is-warning{% endif %}">
+        <div class="budget-item {% if overall_is_over %}is-over{% elif overall_near_limit %}is-warning{% endif %}">
             <div class="category-header">
-                <span class="category-name">Spent {{ currency_symbol }} {{ "%.2f"|format(overall_spent) }} of {{ currency_symbol }} {{ "%.2f"|format(overall_budget.monthly_limit) }}</span>
+                <span class="category-name">Spent {{ overall_spent|money }} of {{ overall_budget.monthly_limit|money }}</span>
                 <span class="category-amount">{{ overall_pct }}%</span>
             </div>
             <div class="category-bar-track">
-                <div class="category-bar {% if overall_near_limit %}secondary{% endif %}" style="width: {{ [overall_pct, 100] | min }}%"></div>
+                <div class="category-bar {% if overall_is_over %}is-over{% elif overall_near_limit %}secondary{% endif %}" style="width: {{ [overall_pct, 100] | min }}%"></div>
             </div>
-            {% if overall_near_limit %}
-            <p class="budget-warning">You're approaching your overall monthly budget.</p>
+            {% if overall_is_over %}
+            <p class="budget-warning"><i data-lucide="alert-triangle"></i>You've gone over your overall monthly budget.</p>
+            {% elif overall_near_limit %}
+            <p class="budget-warning"><i data-lucide="alert-triangle"></i>You're approaching your overall monthly budget.</p>
             {% endif %}
         </div>
         {% endif %}
     </div>
 
-    <div class="profile-section">
+    <div class="profile-section settings-panel">
         <h2 class="profile-section-title">Category Budgets</h2>
         {% if category_rows %}
         <div class="category-list">
             {% for row in category_rows %}
-            <div class="budget-item {% if row.near_limit %}is-warning{% endif %}">
+            <div class="budget-item {% if row.is_over %}is-over{% elif row.near_limit %}is-warning{% endif %}">
                 <form method="POST" action="{{ url_for('settings_budgets') }}" class="settings-form inline-form">
                     <input type="hidden" name="scope" value="{{ row.category.id }}">
-                    <span class="category-row-name">{{ row.category.name }}</span>
-                    <input type="text" name="monthly_limit" inputmode="decimal" pattern="[0-9]*\.?[0-9]*"
-                           value="{{ row.limit if row.limit is not none else '' }}" placeholder="Set limit">
-                    <button type="submit" class="btn-ghost">Save</button>
+                    <span class="budget-cat">
+                        <span class="category-swatch" style="background-color: {{ row.category.color or default_category_color }}"></span>
+                        {{ row.category.name }}
+                    </span>
+                    <div class="input-with-prefix">
+                        <span class="input-prefix">{{ currency_symbol }}</span>
+                        <input type="text" name="monthly_limit" inputmode="decimal" pattern="[0-9]*\.?[0-9]*"
+                               value="{{ row.limit if row.limit is not none else '' }}" placeholder="Set limit"
+                               aria-label="{{ row.category.name }} monthly limit">
+                    </div>
+                    <button type="submit" class="btn-ghost btn-sm">Save</button>
                 </form>
                 {% if row.limit %}
                 <div class="category-header">
-                    <span class="category-name">Spent {{ currency_symbol }} {{ "%.2f"|format(row.spent) }} of {{ currency_symbol }} {{ "%.2f"|format(row.limit) }}</span>
+                    <span class="category-name">Spent {{ row.spent|money }} of {{ row.limit|money }}</span>
                     <span class="category-amount">{{ row.pct }}%</span>
                 </div>
                 <div class="category-bar-track">
-                    <div class="category-bar {% if row.near_limit %}secondary{% endif %}" style="width: {{ [row.pct, 100] | min }}%"></div>
+                    <div class="category-bar {% if row.is_over %}is-over{% elif row.near_limit %}secondary{% endif %}" style="width: {{ [row.pct, 100] | min }}%"></div>
                 </div>
-                {% if row.near_limit %}
-                <p class="budget-warning">You're approaching this category's budget.</p>
+                {% if row.is_over %}
+                <p class="budget-warning"><i data-lucide="alert-triangle"></i>You've gone over this category's budget.</p>
+                {% elif row.near_limit %}
+                <p class="budget-warning"><i data-lucide="alert-triangle"></i>You're approaching this category's budget.</p>
                 {% endif %}
                 {% endif %}
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="danger-text">Add expense categories in Settings &rarr; Categories to set per-category budgets.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon"><i data-lucide="pie-chart"></i></div>
+            <h3>No categories to budget yet</h3>
+            <p>Add an expense category first, then set a monthly limit here.</p>
+            <a href="{{ url_for('settings_categories') }}" class="btn-primary btn-sm">Manage Categories</a>
+        </div>
         {% endif %}
     </div>
 </section>

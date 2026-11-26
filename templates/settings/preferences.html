@@ -30,21 +30,23 @@
         {% endif %}
     {% endwith %}
 
-    <div class="profile-section">
+    <div class="profile-section settings-panel">
         <form method="POST" action="{{ url_for('settings_preferences') }}" class="settings-form">
             <div class="settings-form-row">
                 <div class="form-group">
                     <label for="preferred_currency">Preferred Currency</label>
                     <select id="preferred_currency" name="preferred_currency" required>
                         {% for choice in currency_choices %}
-                        <option value="{{ choice }}" {% if prefs.preferred_currency == choice %}selected{% endif %}>{{ choice }}</option>
+                        <option value="{{ choice }}" {% if prefs.preferred_currency == choice %}selected{% endif %}>{{ choice }} ({{ currency_symbols.get(choice, choice) }})</option>
                         {% endfor %}
                     </select>
+                    <p class="settings-help">Used for all amounts across the app.</p>
                 </div>
                 <div class="form-group">
                     <label for="financial_month_start_day">First Day of Financial Month</label>
                     <input type="number" id="financial_month_start_day" name="financial_month_start_day"
                            min="1" max="28" value="{{ prefs.financial_month_start_day }}" required>
+                    <p class="settings-help">Between 1 and 28. Sets when budgets reset each month.</p>
                 </div>
             </div>
             <div class="settings-form-row">
@@ -71,6 +73,7 @@
                         <option value="{{ choice }}" {% if prefs.default_export_format == choice %}selected{% endif %}>{{ choice | upper }}</option>
                         {% endfor %}
                     </select>
+                    <p class="settings-help">Preselected when exporting expenses.</p>
                 </div>
             </div>
             <button type="submit" class="btn-primary">Save Preferences</button>

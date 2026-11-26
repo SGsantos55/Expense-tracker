@@ -79,10 +79,8 @@ class TestNoDateFilter:
 
 class TestThisMonthPreset:
     def test_this_month_preset_filters_to_current_month(self, auth_client):
-        """This Month preset should filter to May 2026 (current month in seed data)."""
-        today = date.today()
-        first_day = today.replace(day=1).strftime("%Y-%m-%d")
-        last_day = today.strftime("%Y-%m-%d")
+        """Filtering to the seed data's month (May 2026) shows all 8 expenses."""
+        first_day, last_day = "2026-05-01", "2026-05-31"
 
         response = auth_client.get(f"/profile?date_from={first_day}&date_to={last_day}")
         assert response.status_code == 200

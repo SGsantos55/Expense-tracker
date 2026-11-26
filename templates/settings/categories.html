@@ -30,17 +30,18 @@
         {% endif %}
     {% endwith %}
 
-    <div class="profile-section">
+    <div class="profile-section settings-panel">
         <h2 class="profile-section-title">Expense Categories</h2>
         <form method="POST" action="{{ url_for('settings_categories') }}" class="settings-form">
             <div class="settings-form-row">
                 <div class="form-group">
                     <label for="expense-name">Name</label>
                     <input type="text" id="expense-name" name="name" maxlength="{{ custom_category_max_length }}" placeholder="e.g. Pet Care" required>
+                    <p class="settings-help">Shown in the Add Expense form. Max {{ custom_category_max_length }} characters.</p>
                 </div>
                 <div class="form-group">
                     <label for="expense-color">Color</label>
-                    <input type="color" id="expense-color" name="color" value="#00E58F">
+                    <input type="color" id="expense-color" name="color" value="{{ default_category_color }}">
                 </div>
             </div>
             <button type="submit" class="btn-primary">Add Category</button>
@@ -49,18 +50,23 @@
         <div class="category-list">
             {% for cat in expense_categories %}
             <div class="category-row {% if cat.is_archived %}is-archived{% endif %}">
-                <span class="category-swatch" style="background-color: {{ cat.color or '#00E58F' }}"></span>
-                <span class="category-row-name">{{ cat.name }}</span>
-                {% if cat.is_archived %}<span class="badge badge-muted">Archived</span>{% endif %}
+                <div class="category-row-main">
+                    <span class="category-swatch" style="background-color: {{ cat.color or default_category_color }}"></span>
+                    <span class="category-row-name">{{ cat.name }}</span>
+                    {% if cat.is_archived %}<span class="badge badge-muted">Archived</span>{% endif %}
+                </div>
                 <div class="category-row-actions">
-                    <form method="POST" action="{{ url_for('settings_category_edit', id=cat.id) }}" class="inline-form">
-                        <input type="text" name="name" value="{{ cat.name }}" maxlength="{{ custom_category_max_length }}" required>
-                        <input type="color" name="color" value="{{ cat.color or '#00E58F' }}">
-                        <button type="submit" class="btn-ghost">Save</button>
-                    </form>
+                    <details class="category-edit">
+                        <summary class="btn-ghost btn-sm">Edit</summary>
+                        <form method="POST" action="{{ url_for('settings_category_edit', id=cat.id) }}" class="category-edit-form">
+                            <input type="text" name="name" value="{{ cat.name }}" maxlength="{{ custom_category_max_length }}" aria-label="Category name" required>
+                            <input type="color" name="color" value="{{ cat.color or default_category_color }}" aria-label="Category color">
+                            <button type="submit" class="btn-primary btn-sm">Save</button>
+                        </form>
+                    </details>
                     <form method="POST" action="{{ url_for('settings_category_archive', id=cat.id) }}" class="inline-form">
                         <input type="hidden" name="archived" value="{{ '0' if cat.is_archived else '1' }}">
-                        <button type="submit" class="btn-ghost">{{ 'Restore' if cat.is_archived else 'Archive' }}</button>
+                        <button type="submit" class="btn-ghost btn-sm">{{ 'Restore' if cat.is_archived else 'Archive' }}</button>
                     </form>
                     <form method="POST" action="{{ url_for('settings_category_delete', id=cat.id) }}" class="inline-form" onsubmit="return confirm('Delete this category permanently?')">
                         <button type="submit" class="btn-delete">Delete</button>
@@ -70,7 +76,11 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="danger-text">No expense categories yet.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon"><i data-lucide="tags"></i></div>
+            <h3>No expense categories yet</h3>
+            <p>Add your first category above to organise your spending.</p>
+        </div>
         {% endif %}
     </div>
 </section>

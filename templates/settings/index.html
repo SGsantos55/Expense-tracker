@@ -11,10 +11,13 @@
 {% block content %}
 <section class="profile-page settings-page">
     <div class="profile-section-header">
-        <h1 class="profile-section-title">
-            <i data-lucide="settings"></i>
-            Profile &amp; Financial Settings
-        </h1>
+        <div>
+            <h1 class="profile-section-title">
+                <i data-lucide="settings"></i>
+                Profile &amp; Financial Settings
+            </h1>
+            <p class="settings-subtitle">Manage how ExpenseTracker tracks your money.</p>
+        </div>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -29,22 +32,26 @@
 
     <div class="settings-grid">
         <a href="{{ url_for('settings_categories') }}" class="settings-card">
-            <i data-lucide="tags"></i>
+            <span class="settings-card-icon"><i data-lucide="tags"></i></span>
+            <span class="settings-card-chevron"><i data-lucide="chevron-right"></i></span>
             <h2>Custom Categories</h2>
             <p>Add, edit, archive or delete expense categories.</p>
         </a>
         <a href="{{ url_for('settings_income') }}" class="settings-card">
-            <i data-lucide="wallet"></i>
+            <span class="settings-card-icon"><i data-lucide="wallet"></i></span>
+            <span class="settings-card-chevron"><i data-lucide="chevron-right"></i></span>
             <h2>Monthly Income</h2>
             <p>Track income from multiple sources and keep a full history.</p>
         </a>
         <a href="{{ url_for('settings_budgets') }}" class="settings-card">
-            <i data-lucide="pie-chart"></i>
+            <span class="settings-card-icon"><i data-lucide="pie-chart"></i></span>
+            <span class="settings-card-chevron"><i data-lucide="chevron-right"></i></span>
             <h2>Monthly Budgets</h2>
             <p>Set an overall budget and per-category limits with usage warnings.</p>
         </a>
         <a href="{{ url_for('settings_preferences') }}" class="settings-card">
-            <i data-lucide="sliders"></i>
+            <span class="settings-card-icon"><i data-lucide="sliders"></i></span>
+            <span class="settings-card-chevron"><i data-lucide="chevron-right"></i></span>
             <h2>Preferences</h2>
             <p>Currency, financial month start day, date and number formats.</p>
         </a>

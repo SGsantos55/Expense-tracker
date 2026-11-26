@@ -10,14 +10,16 @@ from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
 from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown, insert_expense, get_expense_by_id, update_expense, delete_expense as db_delete_expense, insert_contact_message, get_all_contact_messages, get_expenses_for_export, get_user_by_google_id, get_user_by_email, link_google_id, create_oauth_user, get_user_by_email_for_auth, set_email_verified, update_password_hash, create_auth_token, get_valid_auth_token, mark_token_used, delete_user
-from database.settings_queries import get_categories, create_category, update_category, set_category_archived, delete_category, get_income_entries, add_income_entry, delete_income_entry, get_budgets, set_overall_budget, set_category_budget, get_budget_consumption, get_user_preferences, update_user_preferences
+from database.settings_queries import get_categories, create_category, update_category, set_category_archived, delete_category, get_income_entries, add_income_entry, delete_income_entry, get_budgets, set_overall_budget, set_category_budget, get_budget_consumption, get_user_preferences, update_user_preferences, seed_default_categories
+from database.defaults import DEFAULT_EXPENSE_CATEGORIES
 from database.excel import build_expense_workbook, TEMPLATES as EXPORT_TEMPLATES, DEFAULT_TEMPLATE
 from database.pdf import build_expense_pdf
 from database.mailer import send_verification_email, send_password_reset_email
 
 load_dotenv()
 
-VALID_CATEGORIES = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+VALID_CATEGORIES = [name for name, _color in DEFAULT_EXPENSE_CATEGORIES]
+DEFAULT_CATEGORY_COLOR = DEFAULT_EXPENSE_CATEGORIES[0][1]
 
 CUSTOM_CATEGORY_SENTINEL = "__custom__"
 CUSTOM_CATEGORY_MAX_LENGTH = 30
@@ -83,18 +85,18 @@ def inject_categories():
         "valid_categories": _user_expense_categories(),
         "custom_category_sentinel": CUSTOM_CATEGORY_SENTINEL,
         "custom_category_max_length": CUSTOM_CATEGORY_MAX_LENGTH,
+        "default_category_color": DEFAULT_CATEGORY_COLOR,
     }
 
 
 @app.context_processor
 def inject_currency():
     """Make the user's preferred currency symbol available to all templates."""
-    currency_code = "NPR"
-    if g.get("user_id"):
-        currency_code = get_user_preferences(g.user_id).get("preferred_currency", "NPR")
+    currency_code = _user_preferences().get("preferred_currency", "NPR")
     return {
         "currency_code": currency_code,
         "currency_symbol": CURRENCY_SYMBOLS.get(currency_code, currency_code),
+        "currency_symbols": CURRENCY_SYMBOLS,
     }
 
 
@@ -103,11 +105,105 @@ def inject_currency():
 # ------------------------------------------------------------------ #
 
 def _user_expense_categories():
-    """Return the preset categories plus the user's own active expense categories."""
+    """Return the user's active expense category names.
+
+    Preset categories live in the database (seeded per user) so they can be
+    renamed, archived or budgeted. Fall back to the defaults only for users
+    who have no categories recorded yet, or for anonymous visitors.
+    """
     if not g.get("user_id"):
         return list(VALID_CATEGORIES)
-    custom = [c["name"] for c in get_categories(g.user_id, type="expense", include_archived=False)]
-    return VALID_CATEGORIES + [name for name in custom if name not in VALID_CATEGORIES]
+    active = get_categories(g.user_id, type="expense", include_archived=False)
+    if active:
+        return [category["name"] for category in active]
+    ever_created = get_categories(g.user_id, type="expense", include_archived=True)
+    if not ever_created:
+        return list(VALID_CATEGORIES)
+    return []
+
+
+# ------------------------------------------------------------------ #
+# Preference-aware formatting                                          #
+# ------------------------------------------------------------------ #
+
+NUMBER_FORMATS = {
+    "1,234.56": (",", "."),
+    "1.234,56": (".", ","),
+    "1 234.56": (" ", "."),
+}
+
+DATE_FORMATS = {
+    "YYYY-MM-DD": "%Y-%m-%d",
+    "DD/MM/YYYY": "%d/%m/%Y",
+    "MM/DD/YYYY": "%m/%d/%Y",
+}
+
+
+def _user_preferences():
+    """Return the signed-in user's preferences, cached for the request."""
+    if not g.get("user_id"):
+        return {}
+    prefs = g.get("_user_prefs")
+    if prefs is None:
+        prefs = get_user_preferences(g.user_id) or {}
+        g._user_prefs = prefs
+    return prefs
+
+
+def _format_number(value, decimals=2):
+    prefs = _user_preferences()
+    thousands, decimal = NUMBER_FORMATS.get(
+        prefs.get("number_format", "1,234.56"), (",", ".")
+    )
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return value
+    formatted = f"{number:,.{decimals}f}"
+    if (thousands, decimal) != (",", "."):
+        formatted = (
+            formatted.replace(",", "\x00")
+            .replace(".", decimal)
+            .replace("\x00", thousands)
+        )
+    return formatted
+
+
+def _format_money(value, decimals=2):
+    prefs = _user_preferences()
+    code = prefs.get("preferred_currency", "NPR")
+    symbol = CURRENCY_SYMBOLS.get(code, code)
+    return f"{symbol} {_format_number(value, decimals)}"
+
+
+def _format_date(value):
+    fmt = DATE_FORMATS.get(
+        _user_preferences().get("date_format", "YYYY-MM-DD"), "%Y-%m-%d"
+    )
+    if not value:
+        return ""
+    if isinstance(value, str):
+        try:
+            value = datetime.strptime(value[:10], "%Y-%m-%d")
+        except ValueError:
+            return value
+    return value.strftime(fmt)
+
+
+def _format_month(value):
+    if not value:
+        return ""
+    if isinstance(value, str):
+        try:
+            value = datetime.strptime(value[:7], "%Y-%m")
+        except ValueError:
+            return value
+    return value.strftime("%B %Y")
+
+
+app.jinja_env.filters["money"] = _format_money
+app.jinja_env.filters["fmt_date"] = _format_date
+app.jinja_env.filters["fmt_month"] = _format_month
 
 
 def _validate_category_name(name):
@@ -242,7 +338,7 @@ def _send_password_reset(user_id, email):
 # Routes                                                              #
 # ------------------------------------------------------------------ #
 
-@app.route("/<path:filename>")
+@app.route("/<filename>")
 def public_assets(filename):
     allowed = {
         "favicon-96x96.png",
@@ -326,6 +422,8 @@ def register():
         ).fetchone()
         conn.commit()
         conn.close()
+
+        seed_default_categories(new_user["id"])
 
         sent = _send_verification(new_user["id"], email)
         if sent:
@@ -420,6 +518,7 @@ def login_google_callback():
                 link_google_id(user_id, google_id)
         else:
             user_id = create_oauth_user(name, email, google_id)
+            seed_default_categories(user_id)
 
     session["user_id"] = user_id
     return redirect(url_for("profile"))
@@ -701,8 +800,7 @@ def edit_expense(id):
 
         return render_template(
             "expenses/edit_expense.html",
-            expense=expense,
-            categories=VALID_CATEGORIES
+            expense=expense
         )
 
     # POST request
@@ -886,6 +984,7 @@ def settings_categories():
 
         return redirect(url_for("settings_categories"))
 
+    seed_default_categories(g.user_id)
     expense_categories = get_categories(g.user_id, type="expense", include_archived=True)
     return render_template(
         "settings/categories.html",
@@ -1035,6 +1134,7 @@ def settings_budgets():
         flash("Budget saved.")
         return redirect(url_for("settings_budgets"))
 
+    seed_default_categories(g.user_id)
     prefs = get_user_preferences(g.user_id)
     start, end = _financial_month_range(date_obj.today(), prefs["financial_month_start_day"])
     period_start, period_end = start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
@@ -1061,6 +1161,7 @@ def settings_budgets():
             "spent": spent,
             "pct": pct,
             "near_limit": pct is not None and pct >= BUDGET_WARNING_THRESHOLD,
+            "is_over": pct is not None and pct >= 100,
         })
 
     return render_template(
@@ -1069,6 +1170,7 @@ def settings_budgets():
         overall_spent=overall_spent,
         overall_pct=overall_pct,
         overall_near_limit=overall_pct is not None and overall_pct >= BUDGET_WARNING_THRESHOLD,
+        overall_is_over=overall_pct is not None and overall_pct >= 100,
         category_rows=category_rows,
         period_start=period_start,
         period_end=period_end,

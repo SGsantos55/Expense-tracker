@@ -3,6 +3,8 @@ import psycopg
 from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash
 
+from database.defaults import DEFAULT_EXPENSE_CATEGORIES
+
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql:///spendly")
 
 
@@ -164,6 +166,11 @@ def seed_db():
         ]
 
         with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO categories (user_id, name, type, color) "
+                "VALUES (%s, %s, 'expense', %s)",
+                [(user_id, name, color) for name, color in DEFAULT_EXPENSE_CATEGORIES]
+            )
             cur.executemany(
                 'INSERT INTO expenses (user_id, amount, category, date, description) '
                 'VALUES (%s, %s, %s, %s, %s)',

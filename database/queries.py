@@ -10,6 +10,9 @@ def delete_user(user_id):
         # Delete dependent data first to avoid foreign key violations
         conn.execute("DELETE FROM auth_tokens WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM expenses WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM budgets WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM income_entries WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM categories WHERE user_id = %s", (user_id,))
         # Finally delete the user
         cursor = conn.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()

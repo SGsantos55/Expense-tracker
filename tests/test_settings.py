@@ -132,8 +132,8 @@ class TestCategories:
         from database.settings_queries import get_categories, create_category
         from database.queries import insert_expense
 
-        category_id = create_category(seed_user_id, "Food", "expense")
-        insert_expense(user_id=seed_user_id, amount=10.0, category="Food", date="2026-01-01")
+        category_id = create_category(seed_user_id, "Groceries", "expense")
+        insert_expense(user_id=seed_user_id, amount=10.0, category="Groceries", date="2026-01-01")
 
         response = auth_client.post(f"/settings/categories/{category_id}/delete", follow_redirects=True)
         assert b"cannot be deleted" in response.data
@@ -236,9 +236,9 @@ class TestBudgets:
         from database.queries import insert_expense
         from datetime import date
 
-        category_id = create_category(seed_user_id, "Food", "expense")
+        category_id = create_category(seed_user_id, "Groceries", "expense")
         today = date.today().strftime("%Y-%m-%d")
-        insert_expense(user_id=seed_user_id, amount=90.0, category="Food", date=today)
+        insert_expense(user_id=seed_user_id, amount=90.0, category="Groceries", date=today)
 
         auth_client.post("/settings/budgets", data={"scope": str(category_id), "monthly_limit": "100"})
         response = auth_client.get("/settings/budgets")
@@ -294,3 +294,69 @@ class TestPreferences:
 
         prefs = get_user_preferences(seed_user_id)
         assert prefs["preferred_currency"] == "NPR"
+
+
+# ------------------------------------------------------------------ #
+# Account deletion (dependent rows removed)                            #
+# ------------------------------------------------------------------ #
+
+class TestDeleteAccount:
+    def test_delete_account_removes_all_dependent_rows(self, auth_client, seed_user_id):
+        from database.db import get_db
+        from database.settings_queries import add_income_entry, set_overall_budget
+
+        add_income_entry(seed_user_id, "Salary", 500.0, "2026-05")
+        set_overall_budget(seed_user_id, 750.0)
+
+        response = auth_client.post("/profile/delete")
+
+        assert response.status_code == 302
+        conn = get_db()
+        try:
+            assert conn.execute(
+                "SELECT COUNT(*) AS c FROM users WHERE id = %s", (seed_user_id,)
+            ).fetchone()["c"] == 0
+            for table in ("expenses", "categories", "income_entries", "budgets", "auth_tokens"):
+                assert conn.execute(
+                    f"SELECT COUNT(*) AS c FROM {table} WHERE user_id = %s", (seed_user_id,)
+                ).fetchone()["c"] == 0
+        finally:
+            conn.close()
+
+
+class TestCategoryRenameCascade:
+    def test_rename_updates_existing_expenses(self, auth_client, seed_user_id):
+        from database.settings_queries import create_category, get_categories
+        from database.queries import insert_expense, get_expense_by_id
+
+        category_id = create_category(seed_user_id, "Groceries", "expense")
+        expense_id = insert_expense(
+            user_id=seed_user_id, amount=12.0, category="Groceries", date="2026-05-01"
+        )
+
+        auth_client.post(
+            f"/settings/categories/{category_id}/edit",
+            data={"name": "Snacks", "color": "#123456"},
+        )
+
+        expense = get_expense_by_id(expense_id, seed_user_id)
+        assert expense["category"] == "Snacks"
+        names = [c["name"] for c in get_categories(seed_user_id, type="expense", include_archived=True)]
+        assert "Snacks" in names and "Groceries" not in names
+
+
+class TestPreferenceFormatting:
+    def test_date_and_number_format_apply_to_rendered_amounts(self, auth_client):
+        auth_client.post("/settings/preferences", data={
+            "preferred_currency": "NPR",
+            "financial_month_start_day": "1",
+            "date_format": "DD/MM/YYYY",
+            "number_format": "1.234,56",
+            "default_export_format": "xlsx",
+        })
+
+        response = auth_client.get("/profile")
+        html = response.get_data(as_text=True)
+        assert response.status_code == 200
+        assert "02/05/2026" in html
+        assert "45,50" in html

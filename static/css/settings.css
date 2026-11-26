@@ -1,46 +1,98 @@
 /* ------------------------------------------------------------------ */
+/* Settings pages                                                      */
+/* ------------------------------------------------------------------ */
+
+.settings-page {
+    max-width: 900px;
+}
+
+.settings-subtitle {
+    margin-top: 0.35rem;
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+}
+
+/* ------------------------------------------------------------------ */
 /* Settings hub cards                                                  */
 /* ------------------------------------------------------------------ */
 
 .settings-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--radius-md);
-    margin-top: var(--radius-md);
+    gap: 1rem;
+    margin-top: 1.5rem;
 }
 
 .settings-card {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: var(--radius-lg);
+    position: relative;
+    display: block;
+    padding: 1.5rem;
     background: var(--paper-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     text-decoration: none;
     color: var(--ink);
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .settings-card:hover {
     border-color: var(--neon-green);
     transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(15, 15, 15, 0.06);
 }
 
-.settings-card i {
-    color: var(--neon-green);
+.settings-card:focus-visible {
+    outline: 2px solid var(--neon-green-dark);
+    outline-offset: 2px;
+}
+
+.settings-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.875rem;
+    border-radius: 10px;
+    background: var(--neon-green-light);
+    color: var(--neon-green-dark);
+}
+
+.settings-card-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.settings-card-chevron {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    color: var(--ink-faint);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.settings-card-chevron svg {
+    width: 18px;
+    height: 18px;
+}
+
+.settings-card:hover .settings-card-chevron {
+    color: var(--neon-green-dark);
+    transform: translateX(2px);
 }
 
 .settings-card h2 {
     font-family: var(--font-display);
     font-size: 1.1rem;
-    margin: 0;
+    font-weight: 400;
+    margin: 0 0 0.35rem;
 }
 
 .settings-card p {
     color: var(--ink-muted);
     font-size: 0.875rem;
     margin: 0;
+    max-width: 36ch;
 }
 
 @media (max-width: 600px) {
@@ -50,18 +102,39 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Settings forms                                                      */
+/* Panels                                                              */
+/* ------------------------------------------------------------------ */
+
+.settings-panel {
+    padding: 1.5rem;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+}
+
+.settings-panel > .profile-section-title:first-child {
+    margin-bottom: 1rem;
+}
+
+.settings-panel .budget-item,
+.settings-panel .category-row {
+    background: var(--paper);
+}
+
+/* ------------------------------------------------------------------ */
+/* Forms                                                               */
 /* ------------------------------------------------------------------ */
 
 .settings-form {
-    margin-top: var(--radius-sm);
+    margin-top: 0.75rem;
 }
 
 .settings-form-row {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--radius-md);
-    margin-bottom: var(--radius-md);
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .settings-form-row .form-group {
@@ -73,7 +146,8 @@
     display: block;
     margin-bottom: 0.4rem;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.01em;
     color: var(--ink-soft);
 }
 
@@ -81,17 +155,118 @@
 .settings-form .form-group select {
     width: 100%;
     padding: 0.6rem 0.75rem;
-    border: 2px solid var(--border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-size: 0.95rem;
-    background-color: var(--paper);
+    color: var(--ink);
+    background-color: var(--paper-card);
     font-family: var(--font-body);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .settings-form .form-group input:focus,
 .settings-form .form-group select:focus {
     outline: none;
-    border-color: var(--neon-green);
+    border-color: var(--neon-green-dark);
+    box-shadow: 0 0 0 3px var(--neon-green-light);
+}
+
+.settings-form .form-group input::placeholder {
+    color: var(--ink-faint);
+}
+
+.settings-help {
+    margin: 0.35rem 0 0;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.settings-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.25rem;
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+}
+
+.settings-meta svg {
+    width: 16px;
+    height: 16px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+}
+
+/* Input with a currency prefix */
+.input-with-prefix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-prefix .input-prefix {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+/* Higher specificity than `.settings-form .form-group input` so the
+   prefixed currency symbol never overlaps the placeholder/value. */
+.settings-form .form-group .input-with-prefix input,
+.settings-form .input-with-prefix input,
+.input-with-prefix input {
+    padding-left: 2.75rem;
+}
+
+/* Inline budget forms reuse the same field styling */
+.inline-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.settings-form.inline-form {
+    margin-top: 0;
+}
+
+.inline-form .budget-cat {
+    flex: 1;
+    min-width: 120px;
+}
+
+.inline-form .input-with-prefix .input-prefix {
+    left: 0.65rem;
+    font-size: 0.82rem;
+}
+
+.inline-form .input-with-prefix input {
+    width: 150px;
+    padding: 0.45rem 0.65rem 0.45rem 2.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--ink);
+    background: var(--paper-card);
+}
+
+.inline-form .input-with-prefix input:focus {
+    outline: none;
+    border-color: var(--neon-green-dark);
+    box-shadow: 0 0 0 3px var(--neon-green-light);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                             */
+/* ------------------------------------------------------------------ */
+
+.btn-sm {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
 }
 
 /* ------------------------------------------------------------------ */
@@ -101,56 +276,59 @@
 .category-list {
     display: flex;
     flex-direction: column;
-    gap: var(--radius-sm);
-    margin-top: var(--radius-md);
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 
 .category-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: var(--radius-sm);
-    padding: var(--radius-sm) var(--radius-md);
-    background: var(--paper-card);
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
 }
 
 .category-row.is-archived {
-    opacity: 0.6;
+    opacity: 0.65;
+}
+
+.category-row-main {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
 }
 
 .category-swatch {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
+    border: 1px solid rgba(15, 15, 15, 0.08);
 }
 
 .category-row-name {
     font-weight: 600;
+    font-size: 0.9rem;
     color: var(--ink);
 }
 
 .category-row-actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
     margin-left: auto;
-}
-
-.inline-form {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
 }
 
 .badge {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
     font-weight: 600;
 }
 
@@ -159,51 +337,149 @@
     color: var(--ink-muted);
 }
 
+/* Inline edit for a category, collapsed by default */
+.category-edit summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.category-edit summary::-webkit-details-marker {
+    display: none;
+}
+
+.category-edit[open] > summary {
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.category-edit-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.category-edit-form input[type="text"] {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--ink);
+    background: var(--paper-card);
+}
+
+.category-edit-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--neon-green-dark);
+}
+
+.category-edit-form input[type="color"] {
+    width: 36px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--paper-card);
+    cursor: pointer;
+}
+
 /* ------------------------------------------------------------------ */
 /* Budget items                                                        */
 /* ------------------------------------------------------------------ */
 
 .budget-item {
-    padding: var(--radius-md);
+    padding: 1rem 1.125rem;
     background: var(--paper-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    margin-bottom: var(--radius-sm);
+    margin-bottom: 0.75rem;
+}
+
+.budget-item:last-child {
+    margin-bottom: 0;
 }
 
 .budget-item.is-warning {
+    border-color: var(--accent-2);
+}
+
+.budget-item.is-over {
     border-color: var(--danger);
 }
 
+.budget-cat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+}
+
 .budget-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     color: var(--danger);
     font-size: 0.8125rem;
     margin: 0.5rem 0 0;
 }
 
-@media (max-width: 480px) {
+.budget-item.is-warning .budget-warning {
+    color: var(--accent-2);
+}
+
+.budget-warning svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.category-bar.is-over {
+    background: var(--danger);
+}
+
+/* Numeric alignment */
+.expenses-table .amount-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 520px) {
+    .settings-panel {
+        padding: 1.125rem;
+    }
+
+    .category-row {
+        align-items: flex-start;
+    }
+
     .category-row-actions {
         margin-left: 0;
         width: 100%;
     }
 
-    .inline-form {
-        flex-wrap: wrap;
+    .category-edit {
         width: 100%;
     }
 
-    .category-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .category-row-name {
-        flex: 1;
-    }
-
-    .inline-form input[type="text"] {
-        flex: 1;
-        min-width: 0;
+    .category-edit summary {
+        width: 100%;
+        text-align: center;
     }
 
     .settings-form-row .form-group {
@@ -211,14 +487,14 @@
         flex-basis: 100%;
     }
 
-    .settings-page .btn-ghost,
-    .settings-page .btn-primary,
-    .settings-page .btn-delete {
+    .settings-page .settings-form > .btn-primary {
         width: 100%;
     }
 
     .settings-page form.inline-form .btn-ghost,
-    .settings-page form.inline-form .btn-delete {
+    .settings-page form.inline-form .btn-delete,
+    .settings-page .category-row-actions .btn-ghost,
+    .settings-page .category-row-actions .btn-delete {
         width: auto;
     }
 }
