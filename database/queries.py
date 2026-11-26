@@ -8,6 +8,10 @@ def delete_user(user_id):
     conn = get_db()
     try:
         # Delete dependent data first to avoid foreign key violations
+        conn.execute("DELETE FROM ai_chat_messages WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM ai_chat_sessions WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM ai_summaries WHERE user_id = %s", (user_id,))
+        conn.execute("DELETE FROM ai_usage WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM auth_tokens WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM expenses WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM budgets WHERE user_id = %s", (user_id,))

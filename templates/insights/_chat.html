@@ -1,0 +1,62 @@
+<section class="insights-panel chat-panel" data-chat-panel data-chat-url="{{ url_for('insights_chat') }}" data-ai-enabled="{{ 'true' if chat_available else 'false' }}">
+    <div class="insights-panel-header">
+        <h2 class="insights-panel-title">Ask about your finances</h2>
+        {% if not chat_available %}<span class="insights-badge is-degraded">AI disabled</span>{% endif %}
+    </div>
+
+    {% if chat_available %}
+        <div class="chat-thread" data-chat-thread aria-live="polite">
+            {% if chat_history %}
+                {% for message in chat_history %}
+                <article class="chat-message is-{{ message.role }}">
+                    <span class="chat-message-label">{{ 'You' if message.role == 'user' else 'Assistant' }}</span>
+                    <p class="chat-message-text">{{ message.content }}</p>
+                </article>
+                {% endfor %}
+            {% else %}
+                <p class="chat-empty" data-chat-empty>Answers use only your recorded data for the selected period.</p>
+            {% endif %}
+        </div>
+
+        <div class="chat-suggestions" data-chat-suggestions>
+            <button type="button" class="chat-suggestion" data-chat-suggestion data-message="How did my spending compare with last month?">
+                Compare spending with last month
+            </button>
+            <button type="button" class="chat-suggestion" data-chat-suggestion data-message="Which category used the most budget?">
+                Find the top budget category
+            </button>
+            <button type="button" class="chat-suggestion" data-chat-suggestion data-message="Show my recent expenses">
+                Show recent expenses
+            </button>
+        </div>
+
+        <form class="chat-form" data-chat-form>
+            <input type="hidden" name="preset" value="{{ preset }}">
+            <input type="hidden" name="date_from" value="{{ date_from or '' }}">
+            <input type="hidden" name="date_to" value="{{ date_to or '' }}">
+            <label class="visually-hidden" for="chat-message">Your question</label>
+            <textarea id="chat-message" name="message" class="chat-input" rows="2" maxlength="500" required placeholder="Ask about your income, expenses, budgets or trends..."></textarea>
+            <div class="chat-form-actions">
+                <span class="chat-character-count" data-chat-count>0 / 500</span>
+                <button type="submit" class="btn-primary" data-chat-submit>
+                    Ask
+                </button>
+            </div>
+        </form>
+
+        <p class="chat-status" data-chat-status role="status"></p>
+
+        <form method="POST" action="{{ url_for('insights_chat_clear') }}" class="chat-clear-form" data-chat-clear-form>
+            <button type="submit" class="btn-ghost">
+                Clear chat
+            </button>
+        </form>
+    {% else %}
+        <div class="chat-placeholder">
+            <p>
+                AI chat is disabled. Set <code>AI_ENABLED=true</code> and add your provider key
+                to enable it. Your deterministic insights and summary remain available.
+            </p>
+        </div>
+    {% endif %}
+</section>

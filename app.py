@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, session, g, send_from_directory, Response, abort
+from flask import Flask, jsonify, render_template, request, redirect, flash, url_for, session, g, send_from_directory, Response, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import datetime, date as date_obj, timedelta
@@ -6,6 +6,7 @@ import os
 import re
 import secrets
 import hashlib
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from database.db import get_db, init_db, seed_db
@@ -15,6 +16,27 @@ from database.defaults import DEFAULT_EXPENSE_CATEGORIES
 from database.excel import build_expense_workbook, TEMPLATES as EXPORT_TEMPLATES, DEFAULT_TEMPLATE
 from database.pdf import build_expense_pdf
 from database.mailer import send_verification_email, send_password_reset_email
+from ai.config import BUDGET_WARNING_THRESHOLD
+from ai.formatting import (
+    CURRENCY_SYMBOLS,
+    format_date,
+    format_money,
+    format_month,
+    format_number,
+)
+from ai.periods import PeriodError, financial_month_range, resolve_period
+from ai.service import (
+    ChatRateLimit,
+    ChatUnavailable,
+    SummaryRateLimit,
+    build_page_context,
+    chat_enabled,
+    clear_chat,
+    generate_summary_for_user,
+    get_chat_page_context,
+    resolve_insights_period,
+    run_chat,
+)
 
 load_dotenv()
 
@@ -26,24 +48,15 @@ CUSTOM_CATEGORY_MAX_LENGTH = 30
 CUSTOM_CATEGORY_PATTERN = re.compile(r"^[A-Za-z0-9 ]+$")
 
 CURRENCY_CHOICES = ["USD", "EUR", "GBP", "INR", "NPR", "AUD", "CAD"]
-CURRENCY_SYMBOLS = {
-    "USD": "$",
-    "EUR": "€",
-    "GBP": "£",
-    "INR": "₹",
-    "NPR": "Rs",
-    "AUD": "A$",
-    "CAD": "C$",
-}
 DATE_FORMAT_CHOICES = ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY"]
 NUMBER_FORMAT_CHOICES = ["1,234.56", "1.234,56", "1 234.56"]
 EXPORT_FORMAT_CHOICES = ["xlsx", "pdf"]
-BUDGET_WARNING_THRESHOLD = 90
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "expense-tracker-dev-secret-key-change-in-production")
+app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
 
 # Trust Render's (or any) reverse proxy so request.scheme reflects the original
 # HTTPS request. Without this, url_for(_external=True) builds http:// URLs behind
@@ -126,19 +139,6 @@ def _user_expense_categories():
 # Preference-aware formatting                                          #
 # ------------------------------------------------------------------ #
 
-NUMBER_FORMATS = {
-    "1,234.56": (",", "."),
-    "1.234,56": (".", ","),
-    "1 234.56": (" ", "."),
-}
-
-DATE_FORMATS = {
-    "YYYY-MM-DD": "%Y-%m-%d",
-    "DD/MM/YYYY": "%d/%m/%Y",
-    "MM/DD/YYYY": "%m/%d/%Y",
-}
-
-
 def _user_preferences():
     """Return the signed-in user's preferences, cached for the request."""
     if not g.get("user_id"):
@@ -150,55 +150,27 @@ def _user_preferences():
     return prefs
 
 
+def _same_origin_request():
+    candidate = request.headers.get("Origin") or request.headers.get("Referer")
+    if not candidate:
+        return False
+    return urlparse(candidate).netloc == request.host
+
+
 def _format_number(value, decimals=2):
-    prefs = _user_preferences()
-    thousands, decimal = NUMBER_FORMATS.get(
-        prefs.get("number_format", "1,234.56"), (",", ".")
-    )
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return value
-    formatted = f"{number:,.{decimals}f}"
-    if (thousands, decimal) != (",", "."):
-        formatted = (
-            formatted.replace(",", "\x00")
-            .replace(".", decimal)
-            .replace("\x00", thousands)
-        )
-    return formatted
+    return format_number(value, _user_preferences(), decimals)
 
 
 def _format_money(value, decimals=2):
-    prefs = _user_preferences()
-    code = prefs.get("preferred_currency", "NPR")
-    symbol = CURRENCY_SYMBOLS.get(code, code)
-    return f"{symbol} {_format_number(value, decimals)}"
+    return format_money(value, _user_preferences(), decimals)
 
 
 def _format_date(value):
-    fmt = DATE_FORMATS.get(
-        _user_preferences().get("date_format", "YYYY-MM-DD"), "%Y-%m-%d"
-    )
-    if not value:
-        return ""
-    if isinstance(value, str):
-        try:
-            value = datetime.strptime(value[:10], "%Y-%m-%d")
-        except ValueError:
-            return value
-    return value.strftime(fmt)
+    return format_date(value, _user_preferences())
 
 
 def _format_month(value):
-    if not value:
-        return ""
-    if isinstance(value, str):
-        try:
-            value = datetime.strptime(value[:7], "%Y-%m")
-        except ValueError:
-            return value
-    return value.strftime("%B %Y")
+    return format_month(value, _user_preferences())
 
 
 app.jinja_env.filters["money"] = _format_money
@@ -220,20 +192,7 @@ def _validate_category_name(name):
 
 def _financial_month_range(today, start_day):
     """Return (start_date, end_date) for the financial month containing `today`."""
-    start_day = max(1, min(28, start_day))
-    if today.day >= start_day:
-        start = today.replace(day=start_day)
-    else:
-        first_of_this_month = today.replace(day=1)
-        prev_month_end = first_of_this_month - timedelta(days=1)
-        start = prev_month_end.replace(day=min(start_day, prev_month_end.day))
-
-    if start.month == 12:
-        next_month_start = start.replace(year=start.year + 1, month=1)
-    else:
-        next_month_start = start.replace(month=start.month + 1)
-    end = next_month_start - timedelta(days=1)
-    return start, end
+    return financial_month_range(today, start_day)
 
 
 def resolve_category(form):
@@ -731,6 +690,158 @@ def profile():
         preset_6months_from=(today - timedelta(days=180)).strftime("%Y-%m-%d"),
         preset_6months_to=today.strftime("%Y-%m-%d")
     )
+
+
+@app.route("/insights")
+def insights():
+    if not g.user_id:
+        return redirect(url_for("login"))
+
+    context = build_page_context(
+        g.user_id,
+        request.args.get("preset", "this_month"),
+        request.args.get("date_from"),
+        request.args.get("date_to"),
+    )
+    if context["period_error"]:
+        flash(context["period_error"])
+
+    cached = context["cached_summary"]
+    summary = cached["summary"] if cached else None
+    period_params = context["period_params"]
+    chat_context = get_chat_page_context(g.user_id, session.get("ai_chat_session_id"))
+
+    return render_template(
+        "insights/index.html",
+        facts=context["facts"],
+        period=context["period"],
+        preset=period_params["preset"],
+        date_from=period_params.get("date_from", ""),
+        date_to=period_params.get("date_to", ""),
+        summary=summary,
+        summary_degraded=bool(summary and summary.get("degraded")),
+        summary_generated_at=cached["generated_at"] if cached else None,
+        summary_model=cached["model"] if cached else None,
+        ai_available=context["ai_available"],
+        chat_available=chat_context["available"],
+        chat_history=chat_context["history"],
+    )
+
+
+@app.route("/insights/summary", methods=["POST"])
+def insights_summary():
+    if not g.user_id:
+        return redirect(url_for("login"))
+    if not _same_origin_request():
+        abort(403)
+
+    preset = request.form.get("preset", "this_month")
+    date_from = request.form.get("date_from") or None
+    date_to = request.form.get("date_to") or None
+    force = request.form.get("force") == "1"
+    prefs = get_user_preferences(g.user_id) or {}
+
+    period, error = resolve_insights_period(preset, date_from, date_to, prefs)
+    if error:
+        flash(error)
+        return redirect(url_for("insights"))
+
+    try:
+        result = generate_summary_for_user(
+            g.user_id, preset, date_from, date_to, force=force
+        )
+    except SummaryRateLimit:
+        return Response(
+            "You have generated too many summaries recently. Please try again in an hour.",
+            status=429,
+            content_type="text/plain; charset=utf-8",
+        )
+
+    if result.get("status") == "cached":
+        flash("Your summary is already up to date.")
+    elif result["degraded"]:
+        flash("AI is unavailable; generated a computed summary from your data.")
+    else:
+        flash("AI summary generated.")
+
+    return redirect(url_for("insights", **result["period_params"]))
+
+
+@app.route("/insights/chat", methods=["POST"])
+def insights_chat():
+    if not g.user_id:
+        return jsonify({"error": "Login required."}), 401
+    if not request.is_json:
+        return jsonify({"error": "JSON request required."}), 400
+    if not _same_origin_request():
+        return jsonify({"error": "Invalid request origin."}), 403
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Invalid JSON body."}), 400
+
+    message = str(payload.get("message") or "").strip()
+    if not message or len(message) > 500:
+        return jsonify({"error": "Message must be between 1 and 500 characters."}), 400
+
+    preset = payload.get("preset", "this_month")
+    date_from = payload.get("date_from")
+    date_to = payload.get("date_to")
+    if not isinstance(preset, str) or not all(
+        value is None or isinstance(value, str) for value in (date_from, date_to)
+    ):
+        return jsonify({"error": "Invalid period."}), 400
+
+    try:
+        period = resolve_period(preset, date_from, date_to, prefs=_user_preferences())
+    except (PeriodError, TypeError, ValueError):
+        return jsonify({"error": "Invalid period."}), 400
+
+    if not chat_enabled():
+        return jsonify({"error": "AI chat is not configured."}), 503
+
+    try:
+        result = run_chat(
+            g.user_id,
+            session.get("ai_chat_session_id"),
+            message,
+            period.preset,
+            period.start.isoformat() if period.preset == "custom" else None,
+            period.end.isoformat() if period.preset == "custom" else None,
+        )
+    except ChatRateLimit as exc:
+        return jsonify({"error": str(exc), "rate_limited": True}), 429
+    except ChatUnavailable:
+        return jsonify({"error": "AI chat is not configured."}), 503
+
+    session["ai_chat_session_id"] = result["session_id"]
+    return jsonify(
+        {
+            "answer": result["answer"],
+            "follow_up_suggestions": result["follow_up_suggestions"],
+            "period": result["period"],
+            "status": result["status"],
+            "degraded": result["degraded"],
+        }
+    )
+
+
+@app.route("/insights/chat/clear", methods=["POST"])
+def insights_chat_clear():
+    if not g.user_id:
+        if request.is_json:
+            return jsonify({"error": "Login required."}), 401
+        return redirect(url_for("login"))
+    if not _same_origin_request():
+        if request.is_json:
+            return jsonify({"error": "Invalid request origin."}), 403
+        abort(403)
+
+    clear_chat(g.user_id, session.pop("ai_chat_session_id", None))
+    if request.is_json:
+        return "", 204
+    flash("Chat history cleared.")
+    return redirect(url_for("insights"))
 
 
 @app.route("/expenses/add", methods=["GET", "POST"])
