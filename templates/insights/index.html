@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Expense Tracker Intelligence — Insights | ExpenseTracker{% endblock %}
+{% block meta_description %}Understand your income, spending, budgets and trends with clear, data-backed insights.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/insights.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set status_map = {
+    'ok': 'On track',
+    'near_limit': 'Near limit',
+    'over': 'Over budget',
+    'no_budget': 'No budget'
+} %}
+<section class="insights-page">
+    <header class="insights-header">
+        <div class="insights-intro">
+            <h1 class="insights-title">Insights</h1>
+            <p class="insights-subtitle">
+                {{ facts.period.label }} &middot; compared with {{ facts.period.comparison_label }}
+            </p>
+        </div>
+
+        <form method="GET" action="{{ url_for('insights') }}" class="insights-period-form" data-period-form>
+            <label class="visually-hidden" for="insight-period">Period</label>
+            <select id="insight-period" name="preset" class="insights-select" data-period-select>
+                <option value="this_week" {% if preset == 'this_week' %}selected{% endif %}>This week</option>
+                <option value="this_month" {% if preset == 'this_month' %}selected{% endif %}>This month</option>
+                <option value="last_month" {% if preset == 'last_month' %}selected{% endif %}>Last month</option>
+                <option value="ytd" {% if preset == 'ytd' %}selected{% endif %}>Year to date</option>
+                <option value="custom" {% if preset == 'custom' %}selected{% endif %}>Custom range</option>
+            </select>
+            <div class="insights-custom" data-custom-range {% if preset != 'custom' %}hidden{% endif %}>
+                <input type="date" name="date_from" class="date-input" value="{{ date_from or '' }}" aria-label="Start date">
+                <span class="date-separator">to</span>
+                <input type="date" name="date_to" class="date-input" value="{{ date_to or '' }}" aria-label="End date">
+            </div>
+            <button type="submit" class="filter-apply-btn">Update</button>
+        </form>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="insights-overview">
+        <article class="insight-metric is-income">
+            <div class="insight-metric-head"><span>Income</span></div>
+            <strong class="insight-metric-value">{{ facts.income.display }}</strong>
+            <span class="insight-metric-note">
+                {{ facts.income.entry_count }} recorded entr{% if facts.income.entry_count == 1 %}y{% else %}ies{% endif %}
+                {% if facts.income.basis == 'prorated' %} · prorated for this period{% endif %}
+            </span>
+        </article>
+
+        <article class="insight-metric is-spending">
+            <div class="insight-metric-head"><span>Total expenditure</span></div>
+            <strong class="insight-metric-value">{{ facts.expenses.display_total }}</strong>
+            <span class="insight-metric-note">
+                {{ facts.expenses.count }} transaction{% if facts.expenses.count != 1 %}s{% endif %}
+                {% if facts.expenses.delta_pct is not none %} · {{ facts.expenses.delta_label }} vs previous{% endif %}
+            </span>
+        </article>
+
+        <article class="insight-metric is-budget">
+            <div class="insight-metric-head"><span>Remaining budget</span></div>
+            {% set budget_status = status_map.get(facts.budget.status, facts.budget.status) %}
+            <strong class="insight-metric-value">
+                {% if facts.budget.status == 'no_budget' %}&mdash;{% else %}{{ facts.budget.display_remaining }}{% endif %}
+            </strong>
+            <span class="insight-metric-note">
+                {{ budget_status }}
+                {% if facts.budget.status != 'no_budget' and facts.budget.basis == 'prorated' %} · prorated{% endif %}
+            </span>
+        </article>
+
+        <article class="insight-metric is-savings">
+            <div class="insight-metric-head"><span>Savings</span></div>
+            <strong class="insight-metric-value">{{ facts.savings.display }}</strong>
+            <span class="insight-metric-note">
+                Income minus expenses{% if facts.savings.status == 'deficit' %} · spending exceeds income{% endif %}
+            </span>
+        </article>
+    </div>
+
+    {% if not facts.data_quality.has_expenses or not facts.data_quality.has_income or not facts.data_quality.has_budget %}
+        <div class="insights-data-notices">
+            {% if not facts.data_quality.has_expenses %}
+                <a href="{{ url_for('add_expense') }}" class="insights-data-notice">
+                    <i data-lucide="receipt"></i> No expenses in this period — add one
+                </a>
+            {% endif %}
+            {% if not facts.data_quality.has_income %}
+                <a href="{{ url_for('settings_income') }}" class="insights-data-notice">
+                    <i data-lucide="wallet"></i> No income recorded — add it in settings
+                </a>
+            {% endif %}
+            {% if not facts.data_quality.has_budget %}
+                <a href="{{ url_for('settings_budgets') }}" class="insights-data-notice">
+                    <i data-lucide="pie-chart"></i> No budget set — add one in settings
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <section class="insights-panel">
+        <div class="insights-panel-header">
+            <h2 class="insights-panel-title">Rule-based insights</h2>
+        </div>
+
+        {% if facts.insights %}
+            <div class="rule-insights">
+                {% for insight in facts.insights %}
+                <article class="rule-insight severity-{{ insight.severity }}">
+                    <h3>{{ insight.title }}</h3>
+                    <p>{{ insight.message }}</p>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="insights-empty-line">Nothing needs attention. No spending or budget signals were detected for this period.</p>
+        {% endif %}
+    </section>
+
+    {% include "insights/_summary.html" %}
+
+    <section class="insights-panel">
+        <div class="insights-panel-header">
+            <h2 class="insights-panel-title">Category breakdown</h2>
+        </div>
+
+        {% if facts.budget.categories %}
+            <div class="insights-table-wrap">
+                <table class="expenses-table insights-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="amount-cell">Spent</th>
+                            <th class="amount-cell">Allowance</th>
+                            <th class="amount-cell">Remaining</th>
+                            <th>Utilisation</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in facts.budget.categories %}
+                        <tr>
+                            <td data-label="Category">
+                                <span class="insights-category">
+                                    {% if row.color %}
+                                        <span class="category-swatch" style="background-color: {{ row.color }}"></span>
+                                    {% endif %}
+                                    {{ row.name }}
+                                    {% if row.is_archived %}<span class="insights-tag">archived</span>{% endif %}
+                                </span>
+                            </td>
+                            <td data-label="Spent" class="amount-cell">{{ row.display_spent }}</td>
+                            <td data-label="Allowance" class="amount-cell">
+                                {% if row.status == 'no_budget' %}&mdash;{% else %}{{ row.display_allowance }}{% endif %}
+                            </td>
+                            <td data-label="Remaining" class="amount-cell">
+                                {% if row.status == 'no_budget' %}&mdash;{% else %}{{ row.display_remaining }}{% endif %}
+                            </td>
+                            <td data-label="Utilisation">
+                                <div class="insights-utilisation">
+                                    <div class="category-bar-track">
+                                        {% set width = [row.utilisation or 0, 100] | min %}
+                                        <div class="category-bar {% if row.status == 'over' %}is-over{% elif row.status == 'near_limit' %}secondary{% endif %}" style="width: {{ width }}%"></div>
+                                    </div>
+                                    <span>{% if row.utilisation is not none %}{{ row.utilisation }}%{% else %}&mdash;{% endif %}</span>
+                                </div>
+                            </td>
+                            <td data-label="Status">
+                                <span class="insights-status status-{{ row.status }}">{{ status_map.get(row.status, row.status) }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="insights-empty-line">No categories to show. Add expense categories in settings to track spending against them.</p>
+        {% endif %}
+    </section>
+
+    {% include "insights/_chat.html" %}
+
+    <p class="insights-disclaimer">
+        Expense Tracker Intelligence explains your recorded data. It is not financial advice.
+    </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/insights.js') }}"></script>
+{% endblock %}

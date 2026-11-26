@@ -1,0 +1,100 @@
+{% set summary_data = summary or {} %}
+<section class="insights-panel narrative-panel">
+    <div class="insights-panel-header">
+        <h2 class="insights-panel-title">Summary</h2>
+        {% if summary %}
+            <span class="insights-badge {% if summary_degraded %}is-degraded{% endif %}">
+                {% if summary_degraded %}Computed summary (AI unavailable){% else %}AI-generated{% endif %}
+            </span>
+        {% endif %}
+    </div>
+
+    {% if summary %}
+        <div class="narrative-body">
+            <p class="narrative-overview">{{ summary_data.get('overview', '') }}</p>
+
+            {% set findings = summary_data.get('key_findings') or [] %}
+            {% if findings %}
+                <div class="narrative-block">
+                    <h3>Key findings</h3>
+                    <ul>
+                        {% for item in findings %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if summary_data.get('budget_analysis') %}
+                <div class="narrative-block">
+                    <h3>Budget analysis</h3>
+                    <p>{{ summary_data.get('budget_analysis') }}</p>
+                </div>
+            {% endif %}
+
+            {% set category_notes = summary_data.get('category_analysis') or [] %}
+            {% if category_notes %}
+                <div class="narrative-block">
+                    <h3>Category analysis</h3>
+                    <ul>
+                        {% for item in category_notes %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% set recommendations = summary_data.get('recommendations') or [] %}
+            {% if recommendations %}
+                <div class="narrative-block">
+                    <h3>Suggestions based on your data</h3>
+                    <ul class="narrative-recommendations">
+                        {% for item in recommendations %}
+                            <li>{{ item.text }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% set warnings = summary_data.get('warnings') or [] %}
+            {% if warnings %}
+                <div class="narrative-block narrative-warnings">
+                    <h3>Things to watch</h3>
+                    <ul>
+                        {% for item in warnings %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <form method="POST" action="{{ url_for('insights_summary') }}" class="narrative-action">
+            <input type="hidden" name="preset" value="{{ preset }}">
+            <input type="hidden" name="date_from" value="{{ date_from or '' }}">
+            <input type="hidden" name="date_to" value="{{ date_to or '' }}">
+            <input type="hidden" name="force" value="1">
+            <button type="submit" class="btn-ghost" data-summary-submit>
+                Regenerate
+            </button>
+        </form>
+    {% else %}
+        <div class="insights-empty narrative-empty">
+            <p>
+                {% if ai_available %}
+                    No summary for this period yet. Generate one from the figures above.
+                {% else %}
+                    AI is not configured. A computed summary will be built from the same verified figures.
+                {% endif %}
+            </p>
+            <form method="POST" action="{{ url_for('insights_summary') }}" data-summary-form>
+                <input type="hidden" name="preset" value="{{ preset }}">
+                <input type="hidden" name="date_from" value="{{ date_from or '' }}">
+                <input type="hidden" name="date_to" value="{{ date_to or '' }}">
+                <button type="submit" class="btn-primary" data-summary-submit>
+                    Generate summary
+                </button>
+            </form>
+        </div>
+    {% endif %}
+</section>

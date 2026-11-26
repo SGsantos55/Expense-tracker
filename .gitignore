@@ -12,3 +12,4 @@ SMTP_IMPLEMENTATION.md
 .claude/specs/15-switch-database-to-postgres.md
 tests/conftest.py
 DEPLOYMENT_CICD.md
+cookies.txt
