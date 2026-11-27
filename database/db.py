@@ -1,9 +1,11 @@
 import os
 import psycopg
+from dotenv import load_dotenv
 from psycopg.rows import dict_row
-from werkzeug.security import generate_password_hash
 
 from database.defaults import DEFAULT_EXPENSE_CATEGORIES
+
+load_dotenv()  # app.py imports this module before it calls load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql:///spendly")
 
@@ -50,21 +52,6 @@ def init_db():
                 created_at TEXT NOT NULL DEFAULT (now()::text)
             )
         ''')
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS auth_tokens (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL,
-                token_hash TEXT NOT NULL,
-                purpose TEXT NOT NULL,
-                expires_at TEXT NOT NULL,
-                used_at TEXT,
-                created_at TEXT NOT NULL DEFAULT (now()::text),
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )
-        ''')
-        conn.execute(
-            'CREATE UNIQUE INDEX IF NOT EXISTS idx_auth_tokens_hash ON auth_tokens(token_hash)'
-        )
         conn.execute('''
             CREATE TABLE IF NOT EXISTS categories (
                 id SERIAL PRIMARY KEY,
@@ -222,11 +209,10 @@ def seed_db():
         if existing['count'] > 0:
             return
 
-        password_hash = generate_password_hash('demo123')
         row = conn.execute(
             'INSERT INTO users (name, email, password_hash, email_verified) '
-            'VALUES (%s, %s, %s, 1) RETURNING id',
-            ('Demo User', 'plankmax05@gmail.com', password_hash)
+            'VALUES (%s, %s, NULL, 1) RETURNING id',
+            ('Demo User', 'plankmax05@gmail.com')
         ).fetchone()
         user_id = row['id']
 

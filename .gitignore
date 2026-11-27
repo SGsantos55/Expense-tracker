@@ -13,3 +13,6 @@ SMTP_IMPLEMENTATION.md
 tests/conftest.py
 DEPLOYMENT_CICD.md
 cookies.txt
+.vercel
+.neon
+node_modules/

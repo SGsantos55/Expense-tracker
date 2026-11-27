@@ -12,7 +12,9 @@ def delete_user(user_id):
         conn.execute("DELETE FROM ai_chat_sessions WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM ai_summaries WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM ai_usage WHERE user_id = %s", (user_id,))
-        conn.execute("DELETE FROM auth_tokens WHERE user_id = %s", (user_id,))
+        # Legacy table: only present on databases created before OAuth-only auth
+        if conn.execute("SELECT to_regclass('auth_tokens') AS t").fetchone()["t"]:
+            conn.execute("DELETE FROM auth_tokens WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM expenses WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM budgets WHERE user_id = %s", (user_id,))
         conn.execute("DELETE FROM income_entries WHERE user_id = %s", (user_id,))
@@ -91,101 +93,12 @@ def create_oauth_user(name, email, google_id):
     conn = get_db()
     try:
         row = conn.execute(
-            "INSERT INTO users (name, email, password_hash, google_id) "
-            "VALUES (%s, %s, NULL, %s) RETURNING id",
+            "INSERT INTO users (name, email, password_hash, email_verified, google_id) "
+            "VALUES (%s, %s, NULL, 1, %s) RETURNING id",
             (name, email, google_id)
         ).fetchone()
         conn.commit()
         return row["id"]
-    finally:
-        conn.close()
-
-
-# ------------------------------------------------------------------ #
-# Email verification & password reset                                 #
-# ------------------------------------------------------------------ #
-
-def get_user_by_email_for_auth(email):
-    """Return auth-relevant fields for an email, or None.
-
-    Fields: id, name, email, password_hash, email_verified, google_id.
-    """
-    conn = get_db()
-    try:
-        return conn.execute(
-            "SELECT id, name, email, password_hash, email_verified, google_id "
-            "FROM users WHERE email = %s",
-            (email,)
-        ).fetchone()
-    finally:
-        conn.close()
-
-
-def set_email_verified(user_id):
-    """Mark a user's email address as verified."""
-    conn = get_db()
-    try:
-        conn.execute(
-            "UPDATE users SET email_verified = 1 WHERE id = %s",
-            (user_id,)
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def update_password_hash(user_id, password_hash):
-    """Set a new password hash for a user."""
-    conn = get_db()
-    try:
-        conn.execute(
-            "UPDATE users SET password_hash = %s WHERE id = %s",
-            (password_hash, user_id)
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def create_auth_token(user_id, token_hash, purpose, expires_at):
-    """Store a single-use auth token hash and return the new row id."""
-    conn = get_db()
-    try:
-        row = conn.execute(
-            "INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at) "
-            "VALUES (%s, %s, %s, %s) RETURNING id",
-            (user_id, token_hash, purpose, expires_at)
-        ).fetchone()
-        conn.commit()
-        return row["id"]
-    finally:
-        conn.close()
-
-
-def get_valid_auth_token(token_hash, purpose):
-    """Return an unused, unexpired token row matching hash + purpose, or None."""
-    conn = get_db()
-    try:
-        return conn.execute(
-            "SELECT id, user_id, purpose, expires_at, used_at FROM auth_tokens "
-            "WHERE token_hash = %s AND purpose = %s AND used_at IS NULL "
-            "AND expires_at::timestamp > (now() AT TIME ZONE 'UTC')",
-            (token_hash, purpose)
-        ).fetchone()
-    finally:
-        conn.close()
-
-
-def mark_token_used(token_id):
-    """Mark an auth token as consumed so it cannot be reused."""
-    conn = get_db()
-    try:
-        conn.execute(
-            "UPDATE auth_tokens SET used_at = "
-            "to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') WHERE id = %s",
-            (token_id,)
-        )
-        conn.commit()
     finally:
         conn.close()
 
