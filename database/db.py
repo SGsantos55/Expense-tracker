@@ -1,9 +1,12 @@
 import os
 import psycopg
+from dotenv import load_dotenv
 from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash
 
 from database.defaults import DEFAULT_EXPENSE_CATEGORIES
+
+load_dotenv()  # app.py imports this module before it calls load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql:///spendly")
 
