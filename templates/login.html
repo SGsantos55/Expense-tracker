@@ -10,7 +10,7 @@
 
         <div class="auth-header">
             <h1 class="auth-title">Welcome back</h1>
-            <p class="auth-subtitle">Sign in to your ExpenseTracker account</p>
+            <p class="auth-subtitle">Continue with Google to access your ExpenseTracker account</p>
         </div>
 
         <div class="auth-card">
@@ -24,35 +24,6 @@
             <div class="auth-error">{{ error }}</div>
             {% endif %}
 
-            {% if unverified_email %}
-            <form method="POST" action="{{ url_for('verify_resend') }}" class="resend-verify">
-                <input type="hidden" name="email" value="{{ unverified_email }}">
-                <button type="submit" class="btn-link">Resend verification email</button>
-            </form>
-            {% endif %}
-
-            <form method="POST" action="/login">
-                <div class="form-group">
-                    <label for="email">Email address</label>
-                    <input type="email" id="email" name="email"
-                           class="form-input" placeholder="xyz@email.com"
-                           value="{{ email or '' }}"
-                           required autofocus>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password"
-                           class="form-input" placeholder="Your password"
-                           required>
-                </div>
-                <div class="form-meta">
-                    <a href="{{ url_for('forgot_password') }}" class="form-link">Forgot password?</a>
-                </div>
-                <button type="submit" class="btn-submit">Sign in</button>
-            </form>
-
-            <div class="auth-divider"><span>or</span></div>
-
             <a href="{{ url_for('login_google') }}" class="btn-google">
                 <svg class="btn-google-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
                     <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
@@ -65,8 +36,7 @@
         </div>
 
         <p class="auth-switch">
-            Don't have an account?
-            <a href="{{ url_for('register') }}">Create one free</a>
+            New here? Continuing with Google creates your account on first sign-in.
         </p>
 
     </div>

@@ -316,7 +316,7 @@ class TestDeleteAccount:
             assert conn.execute(
                 "SELECT COUNT(*) AS c FROM users WHERE id = %s", (seed_user_id,)
             ).fetchone()["c"] == 0
-            for table in ("expenses", "categories", "income_entries", "budgets", "auth_tokens"):
+            for table in ("expenses", "categories", "income_entries", "budgets"):
                 assert conn.execute(
                     f"SELECT COUNT(*) AS c FROM {table} WHERE user_id = %s", (seed_user_id,)
                 ).fetchone()["c"] == 0

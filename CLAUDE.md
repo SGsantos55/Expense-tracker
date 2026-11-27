@@ -63,7 +63,6 @@ expense-tracker/
 │   ├── insights/     # Insights page, summary partial, chat UI
 │   ├── landing.html   # Homepage
 │   ├── login.html     # Login page
-│   ├── register.html  # Registration page
 │   ├── terms.html     # Terms & conditions
 │   └── privacy.html   # Privacy policy
 └── static/
@@ -76,8 +75,8 @@ expense-tracker/
 ### Route Structure (app.py)
 
 - `/` - Landing page
-- `/register` - Registration
-- `/login` - Login
+- `/register` - Redirects to `/login` (no password registration)
+- `/login` - Login (Google OAuth only; `/login/google`, `/login/google/callback`)
 - `/terms` - Terms & conditions
 - `/privacy` - Privacy policy
 - `/about` - About Us page (public)
@@ -170,3 +169,9 @@ Rules:
 ## Testing
 
 Tests should be placed in the root or a `tests/` directory. Use pytest-flask to test Flask routes.
+## Authentication
+
+Google OAuth is the only sign-in method. There is no password login, email
+verification, or password reset, and no outbound email. `users.password_hash`
+is legacy/nullable and never read. Legacy `auth_tokens` can be dropped manually
+with `DROP TABLE IF EXISTS auth_tokens;`.
